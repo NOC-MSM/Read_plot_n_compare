@@ -2213,7 +2213,9 @@ def subplot_diff(var, rundict, run_exp_list, Meth="None", depth_extract = 100, y
     else :
         ref_comp_fname = None
     ##
-    if var in ["ZME", "ZMI", "ZMP", "PHN", "PHD", "CHL", "TPP3", "ALK"] :
+    if 'Epipel' in attrs:
+        Epipel_plot = attrs['Epipel']
+    elif var in ["ZME", "ZMI", "ZMP", "PHN", "PHD", "CHL", "TPP3", "ALK"] :
         Epipel_plot = True
     else :
         Epipel_plot = False
@@ -2567,7 +2569,9 @@ def subplot_no_diff(var, rundict, run_exp_list, Meth="None", depth_extract=100, 
     ref_file_name = rundict[runlist[runref]]
     ref_ttl       = runlist[runref]
 
-    if var in ["ZME", "ZMI", "ZMP", "PHN", "PHD", "CHL"] :
+    if 'Epipel' in attrs:
+        Epipel_plot = attrs['Epipel']
+    elif var in ["ZME", "ZMI", "ZMP", "PHN", "PHD", "CHL"] :
         Epipel_plot = True
     else :
         Epipel_plot = False
@@ -2616,9 +2620,15 @@ def subplot_no_diff(var, rundict, run_exp_list, Meth="None", depth_extract=100, 
 
     fig = plt.figure(figsize=(5*jjj,5*iii))
     ## no pac
-    cube = prep_cube(ref_file_name, var)
-    if Meth=="Surface":
+    if Meth=="OneD" or Meth=="surface_OneD" :
+        cube = prep_cube(ref_file_name, var, oneD=True)
+    else:
+        cube = prep_cube(ref_file_name, var)
+
+    if Meth=="Surface" :
         cube = prep_cube_surf(cube)
+    elif Meth=="surface_OneD" :
+        cube = prep_cube_surf(cube, oneD=True)
     elif Meth=="Vert_Inv":
         cube = prep_cube_vert_inv(cube)
     elif Meth=="2D_Extract":
@@ -2648,6 +2658,22 @@ def subplot_no_diff(var, rundict, run_exp_list, Meth="None", depth_extract=100, 
             bbb = np.percentile(cube.data[0,:,:,262].compressed(), 95)
         #
         plot = subplot_proj_Orcagrid(cube[0,:,:,262], fig = fig, iii=iii, jjj=jjj, rect = 1,Proj = False, Epipel_plot = Epipel_plot, colorbar = True, v_min= aaa,v_max=bbb, log_scale=log_scale )
+    elif Meth=="OneD" or Meth=="surface_OneD":
+        if 'Min' in attrs:
+            aaa = attrs['Min']
+        else :
+            aaa = np.percentile(cube.data[...,0,0].compressed(), 5)
+        if 'Max' in attrs:
+            bbb = attrs['Max']
+        else :
+            bbb = np.percentile(cube.data[...,0,0].compressed(), 95)
+        #
+        plot = subplot_timeseries(cube[...,0,0], fig = fig, iii=iii, jjj=jjj, rect = 1,Proj = False, Epipel_plot = Epipel_plot, colorbar = True, v_min= aaa,v_max=bbb, outfreq=outfreq, log_scale=log_scale )
+        if cube.ndim == 4 :
+            plot.y_label("Depth (m)")
+        elif cube.ndim < 4 :
+            plot.y_label(cube.units)
+        plot.x_label("time in Year")
     else:
         plot = subplot_proj_Orcagrid(cube[0,:,:], fig = fig, iii=iii, jjj=jjj, rect = 1,colorbar = True, v_min= aaa,v_max=bbb, log_scale=log_scale )
     plot.subtitle(ref_ttl)
@@ -2658,9 +2684,15 @@ def subplot_no_diff(var, rundict, run_exp_list, Meth="None", depth_extract=100, 
         comp_ttl       = runlist[compref]
 
         # no_speed_pref
-        cube = prep_cube(comp_file_name, var)
-        if Meth=="Surface":
+        if Meth == "OneD" or Meth=="surface_OneD" :
+            cube = prep_cube(comp_file_name, var, oneD=True)
+        else :
+            cube = prep_cube(comp_file_name, var)
+
+        if Meth=="Surface" :
             cube = prep_cube_surf(cube)
+        elif Meth=="surface_OneD" :
+            cube = prep_cube_surf(cube, oneD=True)
         elif Meth=="Vert_Inv":
             cube = prep_cube_vert_inv(cube)
         elif Meth=="2D_Extract":
@@ -2671,6 +2703,13 @@ def subplot_no_diff(var, rundict, run_exp_list, Meth="None", depth_extract=100, 
         ### plot :
         if Meth=="Transect":
             plot = subplot_proj_Orcagrid(cube[0,:,:,262], fig = fig, iii=iii, jjj=jjj, rect = (loop)+1,Proj = False, Epipel_plot = Epipel_plot, colorbar = True, v_min= aaa,v_max=bbb, log_scale=log_scale)
+        elif Meth == "OneD" or Meth=="surface_OneD" :
+            plot = subplot_timeseries(cube[...,0,0], fig = fig, iii=iii, jjj=jjj, rect = (loop)+1,Proj = False, Epipel_plot = Epipel_plot, colorbar = True, v_min= aaa,v_max=bbb, outfreq=outfreq, log_scale=log_scale)
+            if cube.ndim == 4 :
+                plot.y_label("Depth (m)")
+            elif cube.ndim < 4 :
+                plot.y_label(cube.units)
+            plot.x_label("time in Year")
         else:
             plot = subplot_proj_Orcagrid(cube[0,:,:], fig = fig, iii=iii, jjj=jjj, rect = (loop)+1,colorbar = True, v_min= aaa,v_max=bbb, log_scale=log_scale)
         plot.subtitle(comp_ttl)
@@ -2742,9 +2781,9 @@ def prep_cube_transect(FDDT, trans) :
     #
     return cube
 
-def prep_cube_extract_depth(fPOC, depth):
-    #temp = prep_cube(rundict_diad[runlist[1]], "FASTN")
-    ## B coel is the  POC flux at 1000 to 100m ratio
+def prep_cube_extract_depth(fPOC, depth, oneD=False):
+    ##
+    ## B coeff is the  POC flux at 1000 to 100m ratio
     ## 1- needs the POC flux and extract both layer fields
     #
     #fPOC =  prep_cube(file_name,"DET_FLUX_C")
@@ -2765,16 +2804,12 @@ def prep_cube_extract_depth(fPOC, depth):
         surf_slice = cube.extract(iris.Constraint(depth=kk) )
     except :
         surf_slice = cube.extract(iris.Constraint(coord_values={'Vertical T levels':lambda cell: cell == kk}))
-
-    #cube.long_name = "sinking C flux at 100m depth"
+    #
     return surf_slice
 
-def prep_cube_vert_inv(FDDT) :
-    temp = prep_cube(rundict_diad[runlist[1]], "FASTN")
-    #print(temp)
-    #FDDT = prep_cube(filename, var)
-    #print(FDDT)
-    cube = temp.copy()
+def prep_cube_vert_inv(FDDT, oneD=False) :
+    # Sure there is a better way but : 
+    cube = prep_cube_surf(FDDT, oneD=oneD)
     cube.data = FDDT.data.sum(axis=1) ## Sum on the vertical level
     print("cube shape = ", cube.data.shape)
     cube.name = FDDT.name
@@ -2783,10 +2818,7 @@ def prep_cube_vert_inv(FDDT) :
 
     return cube
 
-def prep_cube_surf(FDDT) :
-    temp = prep_cube(rundict_diad[runlist[1]], "FASTN")
-    #print(temp)
-    #FDDT = prep_cube(filename, var)
+def prep_cube_surf(FDDT, oneD=False,) :
     #print(FDDT)
     if FDDT.data.ndim == 4 :
         try :
@@ -2864,7 +2896,7 @@ def prep_cube_Obs(FDDT) :
 
 
 
-def prep_cube(file_name, var, YYear=13, REF_COMP=None, Obs=False) :
+def prep_cube(file_name, var, YYear=13, REF_COMP=None, Obs=False, oneD=False) :
     print("reading", var," in ",file_name, "REF_COMP :", REF_COMP )
     if file_name[-3:] ==".nc" :
         #print("read nc file", file_name)
@@ -2880,18 +2912,18 @@ def prep_cube(file_name, var, YYear=13, REF_COMP=None, Obs=False) :
             cube = prep_cube_Obs(cubi)
         else :
             if var == "PP" :
-                PRN = prep_cube(file_name, "PRN")
-                PRD = prep_cube(file_name, "PRD")
+                PRN = prep_cube(file_name, "PRN", oneD=oneD)
+                PRD = prep_cube(file_name, "PRD", oneD=oneD)
                 cube = PRN.copy()
                 cube.data = PRN.data + PRD.data
                 cube.data = cube.data * 6.625 * 12.011 * 1e-3
                 cube.long_name = "Total Primary production"
                 cube.units = "g-C/m2/d"
             elif var == "ZOO_growth" :
-                ZIG = prep_cube(file_name, "ZI_GROW")
-                ZEG = prep_cube(file_name, "ZE_GROW")
+                ZIG = prep_cube(file_name, "ZI_GROW", oneD=oneD)
+                ZEG = prep_cube(file_name, "ZE_GROW", oneD=oneD)
                 try :
-                    ZPG = prep_cube(file_name, "ZP_GROW")
+                    ZPG = prep_cube(file_name, "ZP_GROW", oneD=oneD)
                 except :
                     ZPG = ZIG.copy()
                     ZPG.data = ZPG.data * 0.0
@@ -2899,26 +2931,26 @@ def prep_cube(file_name, var, YYear=13, REF_COMP=None, Obs=False) :
                 cube.data = ZIG.data + ZEG.data + ZPG.data
                 cube.long_name = "Total Zooplankton Growth"
             elif var == "PHYTO" :
-                PRN = prep_cube(file_name, "PHN_E3T")
-                PRD = prep_cube(file_name, "PHD_E3T")
+                PRN = prep_cube(file_name, "PHN_E3T", oneD=oneD)
+                PRD = prep_cube(file_name, "PHD_E3T", oneD=oneD)
                 cube = PRN.copy()
                 cube.data = PRN.data + PRD.data
                 cube.data = cube.data * 6.625 * 12.011 * 1e-3
                 cube.long_name = "Integrated Phyto biomass"
                 cube.units = "g-C/m2"
             elif var == "ZOO" :
-                PRN = prep_cube(file_name, "ZMI_E3T")
-                PRD = prep_cube(file_name, "ZME_E3T")
+                PRN = prep_cube(file_name, "ZMI_E3T", oneD=oneD)
+                PRD = prep_cube(file_name, "ZME_E3T", oneD=oneD)
                 cube = PRN.copy()
                 cube.data = PRN.data + PRD.data
                 cube.data = cube.data * 5.625 * 12.011 * 1e-3
                 cube.long_name = "Integrated Zoo biomass"
                 cube.units = "g-C/m2"
             elif var == "PLKT" :
-                PRN = prep_cube(file_name, "PHN_E3T")
-                PRD = prep_cube(file_name, "PHD_E3T")
-                ZIG = prep_cube(file_name, "ZMI_E3T")
-                ZEG = prep_cube(file_name, "ZME_E3T")
+                PRN = prep_cube(file_name, "PHN_E3T", oneD=oneD)
+                PRD = prep_cube(file_name, "PHD_E3T", oneD=oneD)
+                ZIG = prep_cube(file_name, "ZMI_E3T", oneD=oneD)
+                ZEG = prep_cube(file_name, "ZME_E3T", oneD=oneD)
                 PRN.data = PRN.data * 6.625 * 12.011 * 1e-3
                 PRD.data = PRD.data * 6.625 * 12.011 * 1e-3
                 ZIG.data = ZIG.data * 5.625 * 12.011 * 1e-3
@@ -2928,8 +2960,8 @@ def prep_cube(file_name, var, YYear=13, REF_COMP=None, Obs=False) :
                 cube.long_name = "Integrated plankton biomass"
                 cube.units = "g-C/m2"
             elif var == "CHL" :
-                PRN = prep_cube(file_name, "CHN")
-                PRD = prep_cube(file_name, "CHD")
+                PRN = prep_cube(file_name, "CHN", oneD=oneD)
+                PRD = prep_cube(file_name, "CHD", oneD=oneD)
                 cube = PRN.copy()
                 cube.data = PRN.data + PRD.data
                 cube.long_name = "Total Chlorophyll"
@@ -2941,33 +2973,33 @@ def prep_cube(file_name, var, YYear=13, REF_COMP=None, Obs=False) :
                 # DETFLUX3 (tot N flux)
                 # FDS_NIT3; FD1_NIT3; FDS_CAR3; FD1_CAR3 ; 3D N or C slow or fast
                 ### ==> DETFLUX3
-                DETF3 = prep_cube(file_name, "DETFLUX3") ## 3D
+                DETF3 = prep_cube(file_name, "DETFLUX3", oneD=oneD) ## 3D
                 ### Extract 2D from specific layer :
                 cube = prep_cube_extract_depth(DETF3, 100)
                 cube.long_name = "sinking N flux at 100m depth"
             elif var == "DETFLUX_200m":
                 ### ==> DETFLUX3
-                DETF3 = prep_cube(file_name, "DETFLUX3") ## 3D
+                DETF3 = prep_cube(file_name, "DETFLUX3", oneD=oneD) ## 3D
                 ### Extract 2D from specific layer :
                 cube = prep_cube_extract_depth(DETF3, 200)
                 cube.long_name = "sinking N flux at 200m depth"
             elif var == "DETFLUX_500m":
                 ### ==> DETFLUX3
-                DETF3 = prep_cube(file_name, "DETFLUX3") ## 3D
+                DETF3 = prep_cube(file_name, "DETFLUX3", oneD=oneD) ## 3D
                 ### Extract 2D from specific layer :
                 cube = prep_cube_extract_depth(DETF3, 500)
                 cube.long_name = "sinking N flux at 500m depth"
             elif var == "DETFLUX_1000m":
                 ### ==> DETFLUX3
-                DETF3 = prep_cube(file_name, "DETFLUX3") ## 3D
+                DETF3 = prep_cube(file_name, "DETFLUX3", oneD=oneD) ## 3D
                 ### Extract 2D from specific layer :
                 cube = prep_cube_extract_depth(DETF3, 1000)
                 cube.long_name = "sinking N flux at 1000m depth"
             elif var == "TRANSF_EFF" :
                 ## flux at 100m :
-                DET100 = prep_cube(file_name, "DETFLUX_100m")
+                DET100 = prep_cube(file_name, "DETFLUX_100m", oneD=oneD)
                 ## flux at 1000m :
-                DET1000 = prep_cube(file_name, "DETFLUX_1000m")
+                DET1000 = prep_cube(file_name, "DETFLUX_1000m", oneD=oneD)
                 ## Transfer eff = flux 1000 / flux 100
                 cube = DET100.copy()
                 cube.data = DET1000.data / DET100.data * 100.0
@@ -2986,22 +3018,22 @@ def prep_cube(file_name, var, YYear=13, REF_COMP=None, Obs=False) :
             #! total tracer, and delta
             #zinvt      = zsum3d + zsum2d
             #### for each of the pool containinh C :
-                CC1  = prep_cube(file_name, "PHN_E3T", REF_COMP=REF_COMP)
+                CC1  = prep_cube(file_name, "PHN_E3T", REF_COMP=REF_COMP, oneD=oneD)
                 CC1a = prep_cube_vert_inv(CC1)
                 #
-                CC2  = prep_cube(file_name, "PHD_E3T", REF_COMP=REF_COMP)
+                CC2  = prep_cube(file_name, "PHD_E3T", REF_COMP=REF_COMP, oneD=oneD)
                 CC2a = prep_cube_vert_inv(CC2)
                 #
-                CC3  = prep_cube(file_name, "ZMI_E3T", REF_COMP=REF_COMP)
+                CC3  = prep_cube(file_name, "ZMI_E3T", REF_COMP=REF_COMP, oneD=oneD)
                 CC3a = prep_cube_vert_inv(CC3)
                 #
-                CC4  = prep_cube(file_name, "ZME_E3T", REF_COMP=REF_COMP)
+                CC4  = prep_cube(file_name, "ZME_E3T", REF_COMP=REF_COMP, oneD=oneD)
                 CC4a = prep_cube_vert_inv(CC4)
                 #
-                CC5  = prep_cube(file_name, "DTC_E3T", REF_COMP=REF_COMP)
+                CC5  = prep_cube(file_name, "DTC_E3T", REF_COMP=REF_COMP, oneD=oneD)
                 CC5a = prep_cube_vert_inv(CC5)
                 #
-                CC6  = prep_cube(file_name, "DIC_E3T", REF_COMP=REF_COMP)
+                CC6  = prep_cube(file_name, "DIC_E3T", REF_COMP=REF_COMP, oneD=oneD)
                 CC6a = prep_cube_vert_inv(CC6)
                 ## dont forget benthic C on diad file :
                 file_d      = file_name[:-9] + "diad" +  file_name[-5:]
@@ -3009,27 +3041,27 @@ def prep_cube(file_name, var, YYear=13, REF_COMP=None, Obs=False) :
                     file_d_comp = None
                 else :
                     file_d_comp = REF_COMP[:-9]  + "diad" +   REF_COMP[-5:]
-                CC7  = prep_cube(file_d, "BEN_C" , REF_COMP=file_d_comp)
-                CC8  = prep_cube(file_d, "BEN_CA", REF_COMP=file_d_comp)
+                CC7  = prep_cube(file_d, "BEN_C" , REF_COMP=file_d_comp, oneD=oneD)
+                CC8  = prep_cube(file_d, "BEN_CA", REF_COMP=file_d_comp, oneD=oneD)
                 #
                 cube = CC7.copy()
                 cube.data = 6.625 * ( CC1a.data + CC2a.data + CC3a.data + CC4a.data) + CC5a.data + CC6a.data + CC7.data + CC8.data
                 cube.long_name = "Total carbon"
                 cube.units = "mmol-C/m2"
             elif var == "TOT_C_org" :
-                CC1  = prep_cube(file_name, "PHN_E3T", REF_COMP=REF_COMP)
+                CC1  = prep_cube(file_name, "PHN_E3T", REF_COMP=REF_COMP, oneD=oneD)
                 CC1a = prep_cube_vert_inv(CC1)
                 #
-                CC2  = prep_cube(file_name, "PHD_E3T", REF_COMP=REF_COMP)
+                CC2  = prep_cube(file_name, "PHD_E3T", REF_COMP=REF_COMP, oneD=oneD)
                 CC2a = prep_cube_vert_inv(CC2)
                 #
-                CC3  = prep_cube(file_name, "ZMI_E3T", REF_COMP=REF_COMP)
+                CC3  = prep_cube(file_name, "ZMI_E3T", REF_COMP=REF_COMP, oneD=oneD)
                 CC3a = prep_cube_vert_inv(CC3)
                 #
-                CC4  = prep_cube(file_name, "ZME_E3T", REF_COMP=REF_COMP)
+                CC4  = prep_cube(file_name, "ZME_E3T", REF_COMP=REF_COMP, oneD=oneD)
                 CC4a = prep_cube_vert_inv(CC4)
                 #
-                CC5  = prep_cube(file_name, "DTC_E3T", REF_COMP=REF_COMP)
+                CC5  = prep_cube(file_name, "DTC_E3T", REF_COMP=REF_COMP, oneD=oneD)
                 CC5a = prep_cube_vert_inv(CC5)
                 #
                 cube = CC1a.copy()
@@ -3039,8 +3071,8 @@ def prep_cube(file_name, var, YYear=13, REF_COMP=None, Obs=False) :
             elif var == "TOT_C_ben" :
                 ## dont forget benthic C on diad file :
                 #file_d = file_name[:-9]+"diad"+file_name[-5:]
-                CC7  = prep_cube(file_name, "BEN_C", REF_COMP=REF_COMP)
-                CC8  = prep_cube(file_name, "BEN_CA", REF_COMP=REF_COMP)
+                CC7  = prep_cube(file_name, "BEN_C", REF_COMP=REF_COMP, oneD=oneD)
+                CC8  = prep_cube(file_name, "BEN_CA", REF_COMP=REF_COMP, oneD=oneD)
                 #
                 cube = CC7.copy()
                 cube.data = CC7.data + CC8.data
@@ -3053,7 +3085,7 @@ def prep_cube(file_name, var, YYear=13, REF_COMP=None, Obs=False) :
             #  zsum2d     = glob_sum( 'trcrrst', z2d(:,:) * zarea(:,:) )
             #  ! total tracer, and delta
             #  zinvt      = zsum3d + zsum2d
-                CC1  = prep_cube(file_name, "ALK_E3T", REF_COMP=REF_COMP)
+                CC1  = prep_cube(file_name, "ALK_E3T", REF_COMP=REF_COMP, oneD=oneD)
                 CC1a = prep_cube_vert_inv(CC1)
                 #
                 file_d      = file_name[:-9] + "diad" +  file_name[-5:]
@@ -3061,14 +3093,14 @@ def prep_cube(file_name, var, YYear=13, REF_COMP=None, Obs=False) :
                     file_d_comp = None
                 else :
                     file_d_comp = REF_COMP[:-9]  + "diad" +   REF_COMP[-5:]
-                CC7  = prep_cube(file_d, "BEN_CA", REF_COMP=file_d_comp)
+                CC7  = prep_cube(file_d, "BEN_CA", REF_COMP=file_d_comp, oneD=oneD)
                 #
                 cube = CC7.copy()
                 cube.data = CC1a.data + 2 * CC7.data
                 cube.long_name = "Total Alkalinity"
                 cube.units = "mmol/m2"
             elif var == "TOT_A_ben" :
-                CC7  = prep_cube(file_name, "BEN_CA", REF_COMP=REF_COMP)
+                CC7  = prep_cube(file_name, "BEN_CA", REF_COMP=REF_COMP, oneD=oneD)
                 #
                 cube = CC7.copy()
                 cube.data = 2 * CC7.data
@@ -3076,11 +3108,11 @@ def prep_cube(file_name, var, YYear=13, REF_COMP=None, Obs=False) :
                 cube.units = "mmol/m2"
             elif var == "RATIO_C_A" :
                 ## Tot
-                CC1a  = prep_cube(file_name, "TOT_C")
-                CC1b  = prep_cube(REF_COMP , "TOT_C")
+                CC1a  = prep_cube(file_name, "TOT_C", oneD=oneD)
+                CC1b  = prep_cube(REF_COMP , "TOT_C", oneD=oneD)
                 #
-                CC2a  = prep_cube(file_name, "TOT_A")
-                CC2b  = prep_cube(REF_COMP , "TOT_A")
+                CC2a  = prep_cube(file_name, "TOT_A", oneD=oneD)
+                CC2b  = prep_cube(REF_COMP , "TOT_A", oneD=oneD)
                 #
                 ## diff TOT_C :
                 CC1 = CC1a.copy()
@@ -3104,8 +3136,8 @@ def prep_cube(file_name, var, YYear=13, REF_COMP=None, Obs=False) :
             #  zsum2d     = glob_sum( 'trcrrst', z2d(:,:) * zarea(:,:) )
             #  ! total tracer, and delta
             #  zinvt      = zsum3d + zsum2d
-                CC1  = prep_cube(file_name, "ATM_PCO2")
-                CC2  = prep_cube(file_name, "OCN_PCO2")
+                CC1  = prep_cube(file_name, "ATM_PCO2", oneD=oneD)
+                CC2  = prep_cube(file_name, "OCN_PCO2", oneD=oneD)
                 #
                 cube = CC2.copy()
                 cube.data = CC2.data - CC1.data
@@ -3117,20 +3149,21 @@ def prep_cube(file_name, var, YYear=13, REF_COMP=None, Obs=False) :
                     print(" REF_COMP is none loop")
                     cube = read_cube(file_name, var)
                     ## fill the halo :
-                    cube.data[...,-1] = cube.data[...,1]
-                    cube.data[...,0] = cube.data[...,1]
-                    #bibi.data[...,0] = bibi.data[...,1]
-                    cube.data.mask[...,-1] = cube.data.mask[...,1]
-                    cube.data.mask[...,0] = cube.data.mask[...,1]
-                    ### mask 0.0
-                    #cube.data = ma.masked_where(cube.data == 0.0, cube.data )
-                    #print('got masked ', cube)
-                    #print('extracted: ', cube)
-                    #plt.rcParams.update({'font.size': 18})
-                    #plot_proj_Orcagrid(cube[0,:,:])
+                    if oneD == False :
+                        cube.data[...,-1] = cube.data[...,1]
+                        cube.data[...,0] = cube.data[...,1]
+                        #bibi.data[...,0] = bibi.data[...,1]
+                        cube.data.mask[...,-1] = cube.data.mask[...,1]
+                        cube.data.mask[...,0] = cube.data.mask[...,1]
+                        ### mask 0.0
+                        #cube.data = ma.masked_where(cube.data == 0.0, cube.data )
+                        #print('got masked ', cube)
+                        #print('extracted: ', cube)
+                        #plt.rcParams.update({'font.size': 18})
+                        #plot_proj_Orcagrid(cube[0,:,:])
                 else :
                     print(" REF_COMP filled loop")
-                    cube = prep_cube_diff(REF_COMP, file_name, var)
+                    cube = prep_cube_diff(REF_COMP, file_name, var, oneD=oneD)
     #else :
     elif file_name[-3:] == "mat" :
         print("read mat file", file_name)
@@ -3166,9 +3199,9 @@ def prep_cube(file_name, var, YYear=13, REF_COMP=None, Obs=False) :
         #
         print(rundict_diad[runlist[1]], var)
         try :
-            temp = prep_cube(rundict_diad[runlist[1]], var)
+            temp = prep_cube(rundict_diad[runlist[1]], var, oneD=oneD)
         except :
-            temp = prep_cube(rundict_ptrc[runlist[1]], var)
+            temp = prep_cube(rundict_ptrc[runlist[1]], var, oneD=oneD)
         print("temp : ", temp.data.shape)
         if obs2D :
             try :
@@ -3264,12 +3297,12 @@ def prep_cube(file_name, var, YYear=13, REF_COMP=None, Obs=False) :
     return cube
 
 
-def prep_cube_diff(file_name_ref, file_name, var) :
+def prep_cube_diff(file_name_ref, file_name, var, oneD=False) :
     #print(var)
     print("prep_cube_diff : ", file_name, "ref file ", file_name_ref, "var : ",var)
-    cube_ref = prep_cube(file_name_ref, var)
+    cube_ref = prep_cube(file_name_ref, var, oneD=oneD)
     #
-    cube = prep_cube(file_name, var)
+    cube = prep_cube(file_name, var, oneD=oneD)
     #
     cube_diff = cube.copy()
     cube_diff.data = cube.data - cube_ref.data
@@ -3290,9 +3323,6 @@ def prep_cube_diff(file_name_ref, file_name, var) :
             cube = TT.copy(SS)
         else :
             cube = TT.copy()
-        cube.data[...,0] = cube.data[...,1]
-        cube.data.mask[...,-1] = cube.data.mask[...,1]
-        cube.data.mask[...,0] = cube.data.mask[...,1]
         return cube
 
 
@@ -3578,6 +3608,252 @@ class subplot_proj_regional(object):
 
 
 
+
+class subplot_timeseries(object):
+    """
+    Plot projected maps
+    """
+
+    def __init__(self, cube,
+                 fig=None, ax=None, iii=1, jjj=1, rect=1, Proj = False,
+                 Epipel_plot = False, cmap = None, norm = None,
+                 BIOMASK = None, ADDCTOUR = None,
+                 colorbar = False, location=None, longit = None, latit=None, outfreq="1M",
+                 xrev = False, ytick_loc = "left", label = None, **attrs):
+
+        """
+        Tri-Polar Grid Projected Plotting
+        =================================
+
+        This example demonstrates cell plots of data on the semi-structured ORCA2 model
+        grid.
+
+        First, the data is projected into the PlateCarree coordinate reference system.
+
+        Second four pcolormesh plots are created from this projected dataset,
+        using different projections for the output image.
+        --Projection list:
+        Mollweide
+        PlateCarree
+        NorthPolarStereo
+        SouthPolarStereo
+        Orthographic
+        SouthOrtho
+        NorthOrtho
+        """
+
+        import matplotlib.pyplot as plt
+        import matplotlib.colors as pltc
+        import cartopy.crs as ccrs
+        import iris
+        import iris.analysis.cartography
+        import iris.plot as iplt
+        import iris.quickplot as qplt
+        import mpl_toolkits.axisartist.floating_axes as FA
+        from matplotlib import ticker
+        from mpl_toolkits.axes_grid1 import make_axes_locatable
+
+        # Load data
+        #filepath = iris.sample_data_path('orca2_votemper.nc')
+        #cube = iris.load_cube(filepath)
+
+
+
+        ctour = attrs['contour'] if 'contour' in attrs else False
+        log_sc = attrs['log_scale'] if 'log_scale' in attrs else False
+
+        aaa = cube.data.min()
+        bbb = cube.data.max()
+        #ttmp = prep_cube(rundict_ptrc[runlist[0]],"SIL")
+
+        print('min var = ',aaa,'; max var = ',bbb)
+        ###
+
+        #fig = plt.figure(figsize=(20,10))
+        #fig.suptitle('ORCA2 Data Projected to {}'.format(name))
+        # Set up axes and title
+
+        if fig is None:
+            fig = plt.figure(figsize=(20,10))
+
+        if ax is None :
+            ax = fig.add_subplot(iii, jjj, rect)
+
+        if cmap :
+            mycmap = cmap
+        elif ('compar' in attrs) :
+            mycmap = plt.cm.get_cmap("BrBG")# jet, seismic, spectral
+        else :
+            mycmap = plt.cm.get_cmap("jet")# jet, seismic, spectral
+
+        # plot with Iris quickplot pcolormesh
+
+        loc_in_attr = location is not None
+        #print("ndim = ", cube.ndim)
+        time_long = cube.shape[0]
+        day = np.arange(time_long)
+
+        ##
+        ## Want time axe in year.
+        if outfreq=="1M" :
+            longit = day /12
+        elif outfreq == "1D" :
+            longit = day /360
+        elif outfreq == "5D" :
+            longit = day * 5 / 360
+        elif outfreq == "10D" :
+            longit = day * 10 / 360
+
+        if cube.ndim > 1 :
+            deep = cube.coord('Vertical T levels').points
+            latit  = deep
+
+        cubbi = np.transpose(cube.data)
+
+        if cube.ndim == 1 :
+            bb = plt.plot(longit,cubbi, axes = ax, label = label)
+
+            if ('v_min' in attrs) and ('v_max' in attrs):
+                v_min = attrs['v_min']
+                v_max = attrs['v_max']
+                ax.set_ylim([v_min, v_max])
+            if log_sc :
+                plt.semilogy()
+
+        elif colorbar and not loc_in_attr :
+
+            if ('v_min' in attrs) and ('v_max' in attrs):
+                v_min = attrs['v_min']
+                v_max = attrs['v_max']
+                # ax = plt.axes()
+                ## cmap = BrBG
+
+                if norm :
+                    if ctour :
+                        bb = plt.contourf(longit,latit,cubbi, cmap=mycmap, norm = norm, vmin=v_min, vmax=v_max, axes = ax)
+                    else :
+                        bb = plt.pcolormesh(longit,latit,cubbi, cmap=mycmap, norm = norm, vmin=v_min, vmax=v_max, axes = ax)
+                elif log_sc :
+                    if ctour :
+                        bb = plt.contourf(longit,latit,cubbi, cmap=mycmap, norm=pltc.LogNorm(vmin=v_min, vmax=v_max), axes = ax)
+                    else :
+                        bb = plt.pcolormesh(longit,latit,cubbi, cmap=mycmap, norm=pltc.LogNorm(vmin=v_min, vmax=v_max), axes = ax)
+                else :
+                    if ctour :
+                        bb = plt.contourf(longit,latit,cubbi, cmap=mycmap, vmin=v_min, vmax=v_max, axes = ax)
+                    else :
+                        bb = plt.pcolormesh(longit,latit,cubbi, cmap=mycmap, vmin=v_min, vmax=v_max, axes = ax)
+
+            else:
+                # ax = plt.axes()
+                if ctour :
+                    if 'levels' in attrs:
+                        levels = attrs['levels']
+                        if log_sc :
+                            cube.data = np.log10(cube.data)
+                            log_lev = np.log10(levels)
+                            bb = plt.contour(longit,latit,cubbi, log_lev, cmap=mycmap, axes = ax)
+                        else:
+                            bb = plt.contour(longit,latit,cubbi, levels, cmap=mycmap, axes = ax)
+                        ax.clabel(bb)
+                    else :
+                        bb = plt.contourf(longit,latit,cubbi, cmap=mycmap, axes = ax)
+                else :
+                    bb = plt.pcolormesh(longit,latit,cubbi, cmap=mycmap, axes = ax)
+                #bibi = ax.pcolormesh(Y, X, var, transform=ccrs.PlateCarree())
+
+
+        else :
+
+            if ('v_min' in attrs) and ('v_max' in attrs):
+                v_min = attrs['v_min']
+                v_max = attrs['v_max']
+                # ax = plt.axes()
+                ## cmap = BrBG
+
+                if norm :
+                    if ctour :
+                        bb = plt.contourf(longit,latit,cubbi, cmap=mycmap, norm = norm, vmin=v_min, vmax=v_max, axes = ax)
+                    else :
+                        bb = plt.pcolormesh(longit,latit,cubbi, cmap=mycmap, norm = norm, vmin=v_min, vmax=v_max, axes = ax)
+                elif log_sc :
+                    if ctour :
+                        bb = plt.contourf(longit,latit,cubbi, cmap=mycmap, norm=pltc.LogNorm(vmin=v_min, vmax=v_max), axes = ax)
+                    else :
+                        bb = plt.pcolormesh(longit,latit,cubbi, cmap=mycmap, norm=pltc.LogNorm(vmin=v_min, vmax=v_max), axes = ax)
+                else :
+                    if ctour :
+                        bb = plt.contourf(longit,latit,cubbi, cmap=mycmap, vmin=v_min, vmax=v_max, axes = ax)
+                    else :
+                        bb = plt.pcolormesh(longit,latit,cubbi, cmap=mycmap, vmin=v_min, vmax=v_max, axes = ax)
+
+            else:
+                # ax = plt.axes()
+                if ctour :
+                    if 'levels' in attrs:
+                        levels = attrs['levels']
+                        if log_sc :
+                            cube.data = np.log10(cube.data)
+                            log_lev = np.log10(levels)
+                            bb = plt.contour(longit,latit,cubbi, log_lev, cmap=mycmap, axes = ax)
+                        else:
+                            bb = plt.contour(longit,latit,cubbi, levels, cmap=mycmap, axes = ax)
+                        ax.clabel(bb)
+                    else :
+                        bb = plt.contourf(longit,latit,cubbi, cmap=mycmap, axes = ax)
+                else :
+                    bb = plt.pcolormesh(longit,latit,cubbi, cmap=mycmap, axes = ax)
+                #bibi = ax.pcolormesh(Y, X, var, transform=ccrs.PlateCarree())
+
+
+        #if location is not None :
+                #location = attrs['location']
+        if cube.ndim > 1 :
+            cbar = plt.colorbar(bb, ax=ax, location='bottom', shrink=0.7, aspect=10)
+
+                #divider = make_axes_locatable(ax)
+                ## creating new axes on the right
+                ## side of current axes(ax).
+                ## The width of cax will be 5% of ax
+                ## and the padding between cax and ax
+                ## will be fixed at 0.05 inch.
+                #colorbar_axes = divider.append_axes(location,
+                #                                    size="10%",
+                #                                    pad=0.1)
+                ## Using new axes for colorbar
+                #cbar = plt.colorbar(bb, cax=colorbar_axes)
+
+                ## colorbar label :
+            cbar.set_label(cube.units)
+            # Draw coastlines
+            try:
+                ax.coastlines()
+            except:
+                print("no coastline to draw")
+            if Epipel_plot == True :
+                ax.set_ylim([500, 0.0])
+            else :
+                ax.set_ylim([1000, 0.0])
+        else :
+            ax.legend()
+
+        self.ax = ax         # Graphical axes
+        if xrev :
+            ax.yaxis.tick_right()
+        if ytick_loc == "right" :
+            ax2.invert_xaxis()
+
+
+    def subtitle(self, title):
+        self.ax.set_title(title)
+
+    def y_label(self, title):
+        self.ax.set_ylabel(title)
+        #self.ax.text(-1.5, 0.5, title, horizontalalignment='left',
+        #             verticalalignment='center', rotation=90 )
+
+    def x_label(self, title):
+        self.ax.set_xlabel(title)
 
 
 
