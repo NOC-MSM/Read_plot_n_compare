@@ -315,7 +315,7 @@ def grid_replace(file_name) :
 
 
 
-def make_big_average_timeseries (var, runlist, run_exp_list, rundict, out_file="ptrc", MASK=None, region=None,year=1850 ):
+def make_big_average_timeseries (var, runlist, run_exp_list, rundict, out_file="ptrc", MASK=None, region=None, Regrid=False, year=1850 ):
     '''
     call as : 
     make_big_average_timeseries (var, runlist, run_exp_list, out_file="ptrc", year=1850)
@@ -4621,8 +4621,43 @@ def prep_cube_vert_inv(FDDT, oneD=False) :
     return cube
 
 
-def prep_Masked_cube(cube,MASK,maskfile="/noc/users/jpp1m13/WORKING/UKESM/MESH/eORCA1/NEMO42/eORCA100_masks.nc") :
+
+
+def prep_mesh_mask(nemogrid="ORCA1_NEMO42", machine="NOC_linux") :
+    '''
+    prep_mesh_mask(nemogrid="ORCA1_NEMO42", machine="NOC_linux")
+    returns grid adapted meshfile and regional masks
+    -- machine could be :
+    NOC_linux
+    ARCHER2
+    -- nemogrids are :
+    ORCA1_NEMO42
+    ORCA1_NEMO36
+
+    '''
+    if machine=="NOC_linux" :
+        if nemogrid == "ORCA1_NEMO42" :
+            meshfile = "/noc/users/jpp1m13/WORKING/UKESM/MESH/eORCA1/NEMO42/mesh_mask.nc"
+            maskfile = "/noc/users/jpp1m13/WORKING/UKESM/MESH/eORCA1/NEMO42/eORCA100_masks.nc"
+        elif nemogrid == "ORCA1_NEMO36" :
+            meshfile = "/noc/users/jpp1m13/WORKING/UKESM/MESH/eORCA1/NEMO36/mesh_mask.nc"
+            maskfile = "/noc/users/jpp1m13/WORKING/UKESM/MESH/eORCA1/NEMO436/eORCA100_masks.nc"
+    elif machine=="ARCHER2" :
+        if nemogrid == "ORCA1_NEMO42" :
+            meshfile = "/noc/users/jpp1m13/WORKING/UKESM/MESH/eORCA1/NEMO42/mesh_mask.nc"
+            maskfile = "/noc/users/jpp1m13/WORKING/UKESM/MESH/eORCA1/NEMO42/eORCA100_masks.nc"
+        elif nemogrid == "ORCA1_NEMO36" :
+            meshfile = "/noc/users/jpp1m13/WORKING/UKESM/MESH/eORCA1/NEMO36/mesh_mask.nc"
+            maskfile = "/noc/users/jpp1m13/WORKING/UKESM/MESH/eORCA1/NEMO436/eORCA100_masks.nc"
+    return meshfile, maskfile
+
+
+
+
+def prep_Masked_cube(cube,MASK,nemogrid="ORCA1_NEMO42", machine="NOC_linux") :
     ##
+    #get correct mesh and mask :
+    [meshfile, maskfile]=prep_mesh_mask(nemogrid=nemogrid, machine=machine)
     #copy cube in to avoid masking several times :
     FDDT = cube.copy()
     ##read the mask : (mask is 2D x:y only)

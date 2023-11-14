@@ -8,6 +8,8 @@ call them in a python function or jupyter notebook, the following way :
 
 ``` python
 
+## If you want to test in Jupyter notebook,
+## you might need the first lot of packages :
 import iris
 import iris.quickplot as qplt
 import iris.plot as iplt
@@ -16,7 +18,7 @@ import numpy as np
 import numpy.ma as ma
 #import h5py
 
-
+## Import the functions :
 from read_plot_n_compare import runclass
 from read_plot_n_compare import subplot_diff_list, subplot_diff, subplot_no_diff, subplot_timeseries
 from read_plot_n_compare import subplot_comp_list, subplot_comp
@@ -26,9 +28,10 @@ from read_plot_n_compare import prep_cube_surf, prep_cube_Obs, prep_cube, prep_c
 from read_plot_n_compare import subplot_proj_regional, subplot_proj_Orcagrid, plot_proj_Orcagrid
 from read_plot_n_compare import bbox_extract_2Dcoords, nc_obs2D_varname, mat_obs2D_varname, mat_obs3D_varname
 
-### To Be Adapted
+### !!! To Be Adapted !!!
+### define the experiments outputs to use in your analyses :
 ###===================================
-from set_runs_input_to_plot_surf import rundict_file, GOSI9dict_file
+from set_runs_input_to_plot_surf import rundict_file ## , GOSI9dict_file ## you can def and add more if needed.
 ###===================================
 
 ### dont want the huge unit var list :
