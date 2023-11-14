@@ -5,120 +5,77 @@ import iris.plot as iplt
 import matplotlib.pyplot as plt
 import numpy as np
 import numpy.ma as ma
-#import h5py
+
 
 ### dont want the huge unit var list :
-import warnings
-warnings.filterwarnings('ignore')
-
-%matplotlib inline
-
-
+#import warnings
+#warnings.filterwarnings('ignore')
+#
+#%matplotlib inline
 
 
-################
-################
-## def file and var : (default have to be updated)
-yr = "YY"
+'''
+def def_var_n_dic(YY) :
+	################
+	################
+	## def file and var : (default have to be updated)
+    yr = "YY"
+    ### Ancillary files -- Needed by some functions : 
+    reg_grid_file = "../MESH/Data_reg_grid/woa13_all_i00_01.nc" 
+    mesh_mask     = "../MESH/eORCA1/NEMO42/mesh_mask.nc"
+    try:
+        ## running local
+        meshfile  = "../MESH/eORCA1/NEMO42/mesh_mask.nc"
+    except:
+        ## on NOC system 
+        meshfile  = "/noc/users/jpp1m13/WORKING/UKESM/MESH/eORCA1/NEMO42/mesh_mask.nc"
+    maskfile      = "../MESH/eORCA1/NEMO42/eORCA100_masks.nc"
+    #maskfile = "/noc/users/axy/Matlab/Macros/woa_mask100.mat"
 
-def ptrcf(mm, YYYY="1859") :
-    return "eORCA1_MED_UKESM_1m_"+YYYY+"0101_"+YYYY+"1230_ptrc_T_"+YYYY+mm+"-"+YYYY+mm+".nc"
 
-def diadf(mm, YYYY="1859") :
-    return "eORCA1_MED_UKESM_1m_"+YYYY+"0101_"+YYYY+"1230_diad_T_"+YYYY+mm+"-"+YYYY+mm+".nc"
+    #### #experiment name :
+    runlist = [ "Init-cond",
+                "No-olivine",
+                "surf",
+                "100m_max",
+                "200m_max"]
 
-def gridf(mm, YYYY="1859") :
-    return "eORCA1_MED_UKESM_1m_"+YYYY+"0101_"+YYYY+"1230_grid_T_"+YYYY+mm+"-"+YYYY+mm+".nc"
+    #### Title associated to experiments
+    ttl_list = ["Init-cond",
+                "No-olivine",
+                "surf",
+                "100m_max",
+                "200m_max"]
 
-#### #experiment name :
-runlist = [ "Init-cond",
-            "No-olivine",
-            "surf",
-            "100m_max",
-            "200m_max"]
-
-#### Title associated to experiments
-ttl_list = ["Init-cond",
-            "No-olivine",
-           "surf",
-           "100m_max",
-           "200m_max"]
-
-#### Path to experiment output files
-rundict = {
-   runlist[0] : "Out",
-   runlist[1] : "Out",
-   runlist[2] : "Out",
-   runlist[3] : "Out",
-   runlist[4] : "Out"
-}
-
-#### Defining output dictionaries
-def rundict_file(yr):
-    #### Dictionary defining ptrc files
-    rundict_ptrc = {
-       #runlist[0] : rundict[runlist[0]] +"/"+ "medusa_co094o_1y_20301201-20311201_ptrc-T.nc",
-       #runlist[1] : rundict[runlist[1]] +"/"+ "medusa_cp800o_1y_20301201-20311201_ptrc-T.nc",
-       #runlist[2] : rundict[runlist[2]] +"/"+ "medusa_cp799o_1y_20301201-20311201_ptrc-T.nc",
-       #runlist[3] : rundict[runlist[3]] +"/"+ "medusa_cn857o_1y_20301201-20311201_ptrc-T.nc"
-       runlist[0] : rundict[runlist[0]] +"/"+ "medusa_bj141o_1y_2015-2024_ptrc-T.nc",
-       runlist[1] : rundict[runlist[1]] +"/"+ "medusa_co094o_1y_2090-2100_ptrc-T.nc",
-       runlist[2] : rundict[runlist[2]] +"/"+ "medusa_cp800o_1y_2090-2100_ptrc-T.nc",
-       runlist[3] : rundict[runlist[3]] +"/"+ "medusa_cp799o_1y_2090-2100_ptrc-T.nc",
-       runlist[4] : rundict[runlist[4]] +"/"+ "medusa_cn857o_1y_2090-2100_ptrc-T.nc"
+    #### Path to experiment output files
+    rundict = {
+        runlist[0] : "Out",
+        runlist[1] : "Out",
+        runlist[2] : "Out",
+        runlist[3] : "Out",
+        runlist[4] : "Out"
     }
-    ##
-    #### Dictionary defining diad files
-    rundict_diad = {
-       #runlist[0] : rundict[runlist[0]] +"/"+ "medusa_co094o_1y_20301201-20311201_diad-T.nc",
-       #runlist[1] : rundict[runlist[1]] +"/"+ "medusa_cp800o_1y_20301201-20311201_diad-T.nc",
-       #runlist[2] : rundict[runlist[2]] +"/"+ "medusa_cp799o_1y_20301201-20311201_diad-T.nc",
-       #runlist[3] : rundict[runlist[3]] +"/"+ "medusa_cn857o_1y_20301201-20311201_diad-T.nc"
-       runlist[0] : rundict[runlist[0]] +"/"+ "medusa_bj141o_1y_2015-2024_diad-T.nc",
-       runlist[1] : rundict[runlist[1]] +"/"+ "medusa_co094o_1y_2090-2100_diad-T.nc",
-       runlist[2] : rundict[runlist[2]] +"/"+ "medusa_cp800o_1y_2090-2100_diad-T.nc",
-       runlist[3] : rundict[runlist[3]] +"/"+ "medusa_cp799o_1y_2090-2100_diad-T.nc",
-       runlist[4] : rundict[runlist[4]] +"/"+ "medusa_cn857o_1y_2090-2100_diad-T.nc"
-    }
-    ##
-    #### Dictionary defining grid-T files
-    rundict_grid = {
-       #runlist[0] : rundict[runlist[0]] +"/"+ "nemo_co094o_1y_20301201-20311201_grid-T.nc",
-       #runlist[1] : rundict[runlist[1]] +"/"+ "nemo_cp800o_1y_20301201-20311201_grid-T.nc",
-       #runlist[2] : rundict[runlist[2]] +"/"+ "nemo_cp799o_1y_20301201-20311201_grid-T.nc",
-       #runlist[3] : rundict[runlist[3]] +"/"+ "nemo_cn857o_1y_20301201-20311201_grid-T.nc"
-       runlist[0] : rundict[runlist[0]] +"/"+ "nemo_bj141o_1y_2015-2024_grid-T.nc",
-       runlist[1] : rundict[runlist[1]] +"/"+ "nemo_co094o_1y_2090-2100_grid-T.nc",
-       runlist[2] : rundict[runlist[2]] +"/"+ "nemo_cp800o_1y_2090-2100_grid-T.nc",
-       runlist[3] : rundict[runlist[3]] +"/"+ "nemo_cp799o_1y_2090-2100_grid-T.nc",
-       runlist[4] : rundict[runlist[4]] +"/"+ "nemo_cn857o_1y_2090-2100_grid-T.nc"
-    }
-    return rundict_ptrc,rundict_diad,rundict_grid
 
-[rundict_ptrc,rundict_diad,rundict_grid] = rundict_file(yr)
-### for example : get ptrc output of 1st exp with file_ptrc = rundict_ptrc[runlist[0]]
+    #### Somme Var lists :
+    ##-----------------------------
+    #Inv_2d_var = [ "RIV_ALK",
+    #            "TOT_SHALK",
+    #            "CO2FLUX"]
 
+    Inv_2d_var = ["CO2FLUX"]
 
-#### Somme Var lists :
-##-----------------------------
-#Inv_2d_var = [ "RIV_ALK",
-#            "TOT_SHALK",
-#            "CO2FLUX"]
-
-Inv_2d_var = ["CO2FLUX"]
-
-Inv_2d_phys = [ "somxl010",
+    Inv_2d_phys = [ "somxl010",
             "tos",
             "sos"]
 
-Inv_2d_ZMP_var = ["FRAGDF1",
+    Inv_2d_ZMP_var = ["FRAGDF1",
                "FRAGDF2",
                "FRAGD",
                "GMPDF1",
                "GMPDF2",
                "GMPD"]
 
-Surf_3d_var = ["ZME",
+    Surf_3d_var = ["ZME",
                "CHL",
               "ZMI",
               "PHN",
@@ -129,9 +86,9 @@ Surf_3d_var = ["ZME",
               "FER",
               "SIL"]
 
-Surf_3d_zmp_var = ["ZMP"]
+    Surf_3d_zmp_var = ["ZMP"]
 
-Inv_3d_var =  ["ZME_E3T",
+    Inv_3d_var =  ["ZME_E3T",
               "ZMI_E3T",
               "PHN_E3T",
               "PHD_E3T",
@@ -144,28 +101,43 @@ Inv_3d_var =  ["ZME_E3T",
               "FER_E3T",
               "SIL_E3T"]
 
-Inv_3d_zmp_var = ["ZMP_E3T"]
+    Inv_3d_zmp_var = ["ZMP_E3T"]
 
-Transect_3d_var = ["TPP3",
+    Transect_3d_var = ["TPP3",
                   "DETFLUX3"]
 
 
-Obs_surf_compare_var = ["CHL",
+    Obs_surf_compare_var = ["CHL",
                         "ALK",
                         "DIC",
                         "DIN",
                         "SIL"]
 
-Obs_surf_diad_var = ["PP",
+    Obs_surf_diad_var = ["PP",
                      "OCN_PCO2",
                      "CO2FLUX"]
 
-Obs_3D_compare_var = ["OXY",
+    Obs_3D_compare_var = ["OXY",
                       "ALK",
                       "DIC",
                       "DIN",
                       "SIL"]
 
+    monthnm = {
+         "01" : "Jan",
+         "02" : "Feb",
+         "03" : "Mar",
+         "04" : "Apr",
+         "05" : "May",
+         "06" : "Jun",
+         "07" : "Jul",
+         "08" : "Aug",
+         "09" : "Sep",
+         "10" : "Oct",
+         "11" : "Nov",
+         "12" : "Dec" }
+
+'''
 
 
 def nc_obs2D_varname(var) :
@@ -249,24 +221,581 @@ def mat_obs3D_varname(var) :
 
     return obsvar
 
-monthnm = {
-         "01" : "Jan",
-         "02" : "Feb",
-         "03" : "Mar",
-         "04" : "Apr",
-         "05" : "May",
-         "06" : "Jun",
-         "07" : "Jul",
-         "08" : "Aug",
-         "09" : "Sep",
-         "10" : "Oct",
-         "11" : "Nov",
-         "12" : "Dec" }
 
 
 #################
 #################
 ### Read and plot functions - if need to update - update on jupyter, then update back here
+
+
+
+
+
+
+class runclass:
+
+    def __init__(self, modlist):
+
+        #
+        print(modlist)
+        #
+        if modlist == 0 :
+            name = "Half sink"
+            exp_name = adddict
+            dict_ptrc = adddict_ptrc
+            dict_diad = adddict_diad
+            dict_grid = adddict_grid
+            #outfreq   = "1M"
+            outfreq   = "5D"
+        elif modlist == 1 :
+            name = "Dble sink"
+            exp_name = rundict
+            dict_ptrc = rundict_ptrc
+            dict_diad = rundict_diad
+            dict_grid = rundict_grid
+            outfreq   = "5D"
+        elif modlist == 2 :
+            name = "MEDUSA"
+            exp_name = rundictold
+            dict_ptrc = olddict_ptrc
+            dict_diad = olddict_diad
+            dict_grid = olddict_grid
+            outfreq   = "5D"
+        else :
+            print("modlist out of list")
+
+        self.name = name
+        self.exp_name = exp_name
+        self.dict_ptrc = dict_ptrc
+        self.dict_diad = dict_diad
+        self.dict_grid = dict_grid
+        self.outfreq   = outfreq
+
+
+        
+def diad_replace(file_name) :
+    '''
+    if not the diad file, change file name to make it the diad file
+    '''
+    if "diad" not in file_name :
+        ## We need a way to know the diad file (use it for ORCA1 2D cube template)
+        try :
+            file_name = file_name.replace("ptrc", "diad")
+        except :
+            file_name = file_name.replace("grid", "diad")
+    return file_name
+
+
+
+def ptrc_replace(file_name) :
+    '''
+    if not the ptrc file, change file name to make it the ptrc file
+    '''
+    if "ptrc" not in file_name :
+        ## We need a way to know the diad file (use it for ORCA1 2D cube template)
+        try :
+            file_name = file_name.replace("diad", "ptrc")
+        except :
+            file_name = file_name.replace("grid", "ptrc")
+    return file_name
+
+
+
+def grid_replace(file_name) :
+    '''
+    if not the grid file, change file name to make it the grid file
+    '''
+    if "grid" not in file_name :
+        ## We need a way to know the diad file (use it for ORCA1 2D cube template)
+        try :
+            file_name = file_name.replace("ptrc", "grid")
+        except :
+            file_name = file_name.replace("diad", "grid")
+    return file_name
+
+
+
+def make_big_average_timeseries (var, runlist, run_exp_list, rundict, out_file="ptrc", MASK=None, region=None,year=1850 ):
+    '''
+    call as : 
+    make_big_average_timeseries (var, runlist, run_exp_list, out_file="ptrc", year=1850)
+    where 
+    -- var is the variable to read
+    -- runlist is the list of possible experiments(used in the dict)
+    -- run_exp_list is the list of exp to go through 
+    -- out_file can be "ptrc" "diad" or "grid" 
+    -- year the year to treat
+    '''
+
+    from os.path import exists
+    from set_runs_input_for_timeseries import rundict_file_TS
+
+    # def file_name for given year and run
+    # check in saved registered array if year is already here for this run
+    # if not --> read the file and avg and save it.
+    #------------------------
+    ### prep regions : 
+    
+    ## regional plot :
+    if region == "Amazon" :
+        jj_min = 175
+        jj_max = 220
+        ii_min = 220
+        ii_max = 260
+    elif region == "Bengal" :
+        jj_min = 200
+        jj_max = 230
+        ii_min = 0
+        ii_max = 30
+    elif region == "UKshelv" :
+        jj_min = 250
+        jj_max = 280
+        ii_min = 275
+        ii_max = 295
+        #ii_min=-7
+        #ii_max=2
+        #jj_min=45
+        #jj_max=55
+    elif region == "NorthOrtho" or region == "NorthPolarStereo":
+        jj_min = 275
+        jj_max = 332
+        ii_min = 0
+        ii_max = 361
+        MASK="arc_msk"
+    
+    ### get the output files name for this year - all experiments
+    
+    [rundict_ptrc, rundict_diad, rundict_grid] = rundict_file_TS(year, runlist, rundict)
+    print(rundict_ptrc)
+    for rundd in [rundict_ptrc, rundict_diad, rundict_grid] :
+        for ii in run_exp_list :
+            if out_file == "ptrc" :
+            	bibi = rundict_ptrc[runlist[ii]]
+            elif out_file == "diad" :
+            	bibi = rundict_diad[runlist[ii]]
+            elif out_file == "grid" :
+            	bibi = rundict_grid[runlist[ii]]
+            
+            if type(bibi) is list : 
+                try : 
+                    if out_file == "ptrc" :
+                        rundict_ptrc.update({runlist[ii] : bibi[0]})
+                    if out_file == "diad" :
+                        rundict_diad.update({runlist[ii] : bibi[0]})
+                    if out_file == "grid" :
+                        rundict_grid.update({runlist[ii] : bibi[0]})
+                except : 
+                    print('!! list problem -- probably no file or file corrupted !!')
+                    EXIT = True
+    ##
+    ### run through all runs of the list
+    for exp in run_exp_list :
+        EXIT=False
+        ###
+        ##1 - read saved time_serie if exist
+        if region is None :
+            tm_name=var+"_"+runlist[exp]+"_time_serie"
+        else : 
+            tm_name=var+"_"+runlist[exp]+"_"+region+"_time_serie"
+        print(tm_name)    
+        if exists(tm_name+".npy") : 
+            tm = np.load(tm_name+".npy")
+            print(tm.shape)
+            #print(tm)
+            NEW = False
+            ### Check if year already filled for this run : 
+            if year in tm[0,:] : 
+                EXIT=True
+        else :
+            NEW = True
+            
+        ###
+        if EXIT is not True :
+            ##2 - read the output 
+            if out_file == "ptrc" :
+                ref_file_name = rundict_ptrc[runlist[exp]]
+            elif out_file == "diad" :
+                ref_file_name = rundict_diad[runlist[exp]]
+            elif out_file == "grid" :
+                ref_file_name = rundict_grid[runlist[exp]]
+            #
+            ref_ttl       = runlist[exp]
+            #
+            try : 
+                cube = prep_cube(ref_file_name, var,Obs=False,MASK_ZERO=True )
+            except : 
+                print(' !! SOMETHING WRONG IN ', ref_file_name )
+                EXIT = True
+            ### we have the field --> now average :
+            # need  surface only :
+ 
+        if EXIT is not True :        
+            try :
+                cube = prep_cube_surf(cube)
+                if cube is None :
+                    print("cube ref surface gives None")
+            except :
+                print("already 2D -- ", cube.data.shape ," no need to extract ")
+        ##
+            ## mask if needed :
+            if MASK is not None :
+                cube = prep_Masked_cube(cube,MASK)
+                if cube is None :
+                    print("cube ref Masking gives None")
+            ##
+            ## regrid to get a real average
+
+            if Regrid :
+                print("Regridding cube_ref")
+                cube = regrid_ORCA(cube, runlist, Meth="Surface", run_nb=exp, MASK=MASK, NEW=True)
+                if cube is None :
+                    print("cube ref Regrid gives None")
+                print("Regridded cube : ", cube.shape)
+            #print("cube_ref : ", cube_ref.shape)
+    ##
+
+            ##
+            ## extract region if needed     
+            #if region is not None :
+            #    cubi = cube[...,jj_min:jj_max,ii_min:ii_max].copy()
+            #else :
+            #    cubi = cube.copy()
+            ### check 
+            #print("cube shape after extractions :", cubi.shape )
+        
+            ### now average : 
+            ## can be done proprely, but try first the easy way : 
+            #### we want to regrid the surface, and then cube collapse lat/lon or nanmean. \o/
+            #### no need for region extraction --
+            avg = np.nanmean(cube.data)
+            #print(year, avg)
+            ytm=np.empty([2,1])
+            ytm[0,0]=year
+            ytm[1,0] = avg
+            if NEW :
+                ntm=ytm
+            else : 
+                ntm=np.empty([2,tm.shape[1]+1])
+                ntm[:,:-1]=tm
+                ntm[:,-1]=ytm[:,0]
+            #print("new array's shape :",ntm.shape)
+            #print(ntm)
+            np.save(tm_name, ntm)
+            ## 
+            ## should be it
+        
+        
+
+
+        
+def fix_nemo_cube(src_cubi, mesh_mask="/noc/users/jpp1m13/WORKING/UKESM/MESH/eORCA1/NEMO42/MEDUSA_well_defined.nc") :
+    ## cube badly written - have to fix it...
+    ## there is no x and y and z coord in the 4.2 NEMO files
+    ## get a file with the right coord :
+    tmp_src= prep_cube(mesh_mask,"PRN")
+    #print(tmp_src)
+    # and create new, well defined, cube
+                    ###
+    print(" NO coord... fix NEMO file")
+    # guess 2D or 3D
+    regrid2d = False
+    regrid3d = False
+    if src_cubi.data.ndim == 4 :
+        print("-- Fixing 3D --")
+        regrid3d = True
+    elif src_cubi.data.ndim == 3 :
+        ## check the first dim is depth (more than one layer)
+        ## if not, no need to extract
+        if src_cubi.data.shape[0] <= 12 :
+            print("-- Fixing 2D --")
+            regrid2d = True
+        else :
+            # real 3D
+            print("-- Fixing 3D --")
+            regrid3d = True
+    elif src_cubi.data.ndim == 2 :
+        # already 2D
+        print("-- Fixing 2D --")
+        regrid2d = True
+        #area = src_cubi.copy(e1t.data[0,:,:] * e2t.data[0,:,:])
+    else :
+        print("data shape not understood : ", src_cubi.data.shape)
+
+    # create Cube :
+    #print("area shape     : ", area.shape)
+    xx = tmp_src.coord(axis='x')
+    #print(xx)
+    yy = tmp_src.coord(axis='y')
+    #print(yy)
+    #tt = src_cubi.coords(axis='t')[0]
+    #print(tt)
+    ##
+    #ttdim = src_cubi.shape[0]
+    #yydim = tmp_src.shape[1]
+    #xxdim = tmp_src.shape[2]
+    ##
+    if regrid3d :
+        src_cubi.add_aux_coord(yy, data_dims=[2, 3])
+        src_cubi.add_aux_coord(xx, data_dims=[2, 3])
+        #zz = src_cubi.coord(axis='z')
+        #print(zz)
+        #zzdim = src_cubi.shape[1]
+        #reg_cubi = iris.cube.Cube(np.zeros((ttdim, zzdim, yydim, xxdim)),
+        #                dim_coords_and_dims=[(tt, 0),
+        #                                    (zz, 1),
+        #                                    (yy, 2),
+        #                                    (xx, 3)])
+    else:
+        #reg_cubi = iris.cube.Cube(np.zeros((ttdim, yydim, xxdim)))
+        #reg_cubi.add_dim_coord(tt, 0)
+        src_cubi.add_aux_coord(yy, data_dims=[1, 2])
+        src_cubi.add_aux_coord(xx, data_dims=[1, 2])
+
+    #reg_cubi.data = src_cubi.data
+    #reg_cubi.name = src_cubi.name
+    #reg_cubi.var_name = src_cubi.var_name
+    #reg_cubi.long_name = src_cubi.long_name
+    #reg_cubi.units = src_cubi.units
+
+    return src_cubi
+
+
+
+
+
+def regrid_ORCA(src_cubi, runlist, Meth=None, NEW = False, run_nb=None, MASK=None, reg_grid_file = "/noc/users/jpp1m13/WORKING/UKESM/MESH/Data_reg_grid/woa13_all_i00_01.nc") :
+    '''
+    regrid_ORCA(src_cubi, Meth=None, NEW = False, run_nb=run_nb) :
+    regrids on WOA 1x1 grid (if not already here ) and saves it 
+    -- src_cubi : source cube to regrid
+    -- runlist : same as in subplot_diff -- list of available run names, used to name the regrid file 
+    -- if Meth is Surface : regrid only surface field
+    -- NEW to reproduce the file -- to regrid again
+    -- run_nb : run number to get the run name for the file to save.
+    -- MASK   : if you want to mask the file to regrid (mask is the same than in subplot_diff )
+    -- reg_grid_file : a regrid file used a ref model for the grid -- default WOA 1x1 grid.
+    '''
+    import os
+
+    dirr="SAVE_NC_FILE"  ## Directory with all saved regrided nc files
+    ##
+    ##first check dir exists and create it if needed:
+    if os.path.isdir(dirr) != True :
+        os.mkdir(dirr)
+    ##
+    ## regrid :
+    ## Target grid : WOA 
+    reg_cube = prep_cube(reg_grid_file,"i_mn")
+    #if Meth=="Surface":
+    reg_cube = prep_cube_surf(reg_cube)
+    ##
+    if Meth=="Surface":
+        print("Regrid -- extract surf -- cube shape : ",src_cubi.shape)
+        src_cubi = prep_cube_surf(src_cubi)
+        if src_cubi is None : 
+            print("Regrid -- cube Surface gives None")
+    ##
+    ## extra precautions -- mask problematic values
+    ## target -- should not be needed
+    reg_cube.data = np.ma.masked_invalid(reg_cube.data)
+    reg_cube.data = np.ma.masked_where(reg_cube.data==0.0, reg_cube.data)
+    reg_cube_mask = reg_cube.data.mask
+    ## sources 
+    src_cubi.data = np.ma.masked_invalid(src_cubi.data)
+    src_cubi.data = np.ma.masked_where(src_cubi.data==0.0, src_cubi.data)
+
+        #print(reg_cube)
+    reg_cube.coord(axis='x').coord_system = iris.coord_systems.GeogCS(6371229.0)
+    reg_cube.coord(axis='y').coord_system = iris.coord_systems.GeogCS(6371229.0)
+    #reg_grid = reg_cube.coords()
+    #print(reg_grid)
+    ## Source grid to regrid: NEMO
+    #src_cubi = prep_cube("Out/medusa_cp799o_sum-1m_20200101-21001231_diad-T.nc","TOT_SHALK")
+    regrid2d = False
+    regrid3d = False
+    print("src cubi shape : ", src_cubi.shape)
+    print("reg cube shape : ", reg_cube.shape)
+    src_mask = src_cubi.copy()
+    src_mask.data[...] = 1
+    src_mask.data[src_cubi.data.mask] = 0
+    
+    if src_cubi.data.ndim == 4 :
+        print("-- 3D Regrid --")
+        regrid3d = True
+    elif src_cubi.data.ndim == 3 :
+        ## check the first dim is depth (more than one layer)
+        ## if not, no need to extract
+        if src_cubi.data.shape[0] <= 12 :
+            print("-- 2D Regrid --")
+            regrid2d = True
+        else :
+            # real 3D
+            print("-- 3D Regrid --")
+            regrid3d = True
+    elif src_cubi.data.ndim == 2 :
+        # already 2D
+        print("-- 2D Regrid --")
+        regrid2d = True
+        #area = src_cubi.copy(e1t.data[0,:,:] * e2t.data[0,:,:])
+    else : 
+        print("data shape not understood : ", src_cubi.data.shape)
+   ###
+   ### need src_cubi coord system (but might need to fix the cubes...)
+    try:
+        src_cubi.coord(axis='x').coord_system = reg_cube.coord(axis='x').coord_system
+        src_cubi.coord(axis='y').coord_system = reg_cube.coord(axis='y').coord_system
+    except :
+        src_cubi = fix_nemo_cube(src_cubi)
+        src_cubi.coord(axis='x').coord_system = reg_cube.coord(axis='x').coord_system
+        src_cubi.coord(axis='y').coord_system = reg_cube.coord(axis='y').coord_system
+    ##
+    ## Scheme --
+    #scheme = iris.analysis.AreaWeighted(mdtol=0.5)
+    #scheme = iris.analysis.PointInCell()
+    scheme = iris.analysis.UnstructuredNearest()
+    #scheme = iris.analysis.Nearest()
+    #scheme = iris.analysis.Linear()
+    ##
+    isfile = False
+    if MASK==None : 
+        MASK="no"
+    ##
+    if regrid2d : 
+        fname = dirr + "/regridded_" + src_cubi.var_name + "_" + runlist[run_nb] + "_" + MASK + "_mask_2D.nc"
+        print("check if 2D file exists : ", fname)
+        if os.path.isfile(fname) and not NEW: 
+             # file exists : read it 
+            print("read regridded file : ",fname)
+            reg_cubi = iris.load_cube(fname)
+            isfile = True
+        else :     
+            # create it 
+            print("No file to read : regridding")
+            reg_cubi=src_cubi.regrid(reg_cube, scheme)
+            #reg_mask=src_mask.regrid(reg_cube, scheme)
+    elif regrid3d : 
+        fname = dirr + "/regridded_" + src_cubi.var_name + "_" + runlist[run_nb] + "_" + MASK + "_mask_3D.nc"
+        print("check if 3D file exists : ", fname)
+        if os.path.isfile(fname) and not NEW: 
+            # file exists : read it 
+            print("read regridded file : ",fname)
+            reg_cubi = iris.load_cube(fname)
+            isfile = True
+        else :     
+            ### 
+            print("No file to read : regridding")
+            # create Cube :
+            #print("area shape     : ", area.shape)
+            xx = reg_cube.coord(axis='x')
+            yy = reg_cube.coord(axis='y')
+            #print(reg_cube)
+            tt = src_cubi.coords(axis='t')[0]
+            zz = src_cubi.coord(axis='z')
+            #if zz==None :
+            #    zz = src_cubi.coord('Vertical T levels')
+            #print(cc)
+            ttdim = src_cubi.shape[0]
+            zzdim = src_cubi.shape[1]
+            yydim = reg_cube.shape[1]
+            xxdim = reg_cube.shape[2]
+
+            reg_cubi = iris.cube.Cube(np.zeros((ttdim, zzdim, yydim, xxdim)),
+                        dim_coords_and_dims=[(tt, 0),
+                                             (zz, 1),
+                                             (yy, 2), 
+                                             (xx, 3)])
+            reg_cubi.name = src_cubi.name
+            reg_cubi.var_name = src_cubi.var_name
+            reg_cubi.long_name = src_cubi.long_name
+            reg_cubi.units = src_cubi.units
+            #reg_mask = reg_cubi.copy()
+            for ZZZ in np.arange(zzdim) : 
+                print("Regrid Z level --",ZZZ)
+                print("src cubi slice shape : ", src_cubi[:,ZZZ,:,:].shape)
+                tcube=src_cubi[:,ZZZ,:,:].regrid(reg_cube, scheme)
+                reg_cubi.data[:,ZZZ,:,:] = tcube.data
+                #tmask = src_mask[:,ZZZ,:,:].regrid(reg_cube, scheme)
+                #reg_mask.data[:,ZZZ,:,:] = tmask.data
+            
+    
+    if not isfile : 
+        ## need a masked array
+        #bibi = np.ma.masked_where(reg_mask.data == 0, reg_cubi.data)
+        bibi = np.ma.masked_where(reg_cubi.data > 1e17, reg_cubi.data)
+        reg_cubi.data = bibi
+        ## Save file : 
+        print("saving file : ",fname)          
+        iris.save(reg_cubi, fname)
+    else : 
+        print(reg_cubi)
+        
+    return reg_cubi
+
+
+
+
+
+
+def load_meta(datapath, fxpath=None):
+    """Load metadata of the netCDF file.
+
+    Parameters
+    ----------
+    datapath: str
+        path to the netCDF file with data
+    fxpath: str
+        path to the netCDF file with fx files
+
+    Returns
+    -------
+    datafile: instance of netCDF4 Dataset
+        points to the file
+    lon2d: numpy array
+        Two dimentional longitude information
+    lat2d: numpy array
+        Two dimentional latitude information
+    lev: numpy array
+        depths of the model levels
+    time: numpy array
+        dates are converted to datetime objects
+    areacello: numpy array
+        values of areacello
+    """
+    from netCDF4 import Dataset
+    
+    datafile = Dataset(datapath)
+
+    if fxpath:
+        datafile_area = Dataset(fxpath)
+        areacello = datafile_area.variables['areacello'][:]
+    else:
+        areacello = None
+
+    lon = datafile.variables['lon'][:]
+    lat = datafile.variables['lat'][:]
+    lev = datafile.variables['lev'][:]
+    time = num2date(datafile.variables['time'][:],
+                    datafile.variables['time'].units)
+    # hack for HadGEM2-ES
+    lat[lat > 90] = 90
+
+    if lon.ndim == 2:
+        lon2d, lat2d = lon, lat
+    elif lon.ndim == 1:
+        lon2d, lat2d = np.meshgrid(lon, lat)
+
+    metadata = {}
+    metadata['datafile'] = datafile
+    metadata['lon2d'] = lon2d
+    metadata['lat2d'] = lat2d
+    metadata['lev'] = lev
+    metadata['time'] = time
+    metadata['areacello'] = areacello
+    return metadata
+
+
+
+
 
 
 def plot_budget_bar(var, xx, globi, exp_names, yr = None, Convert=1.0, ConvUnit = "None", op = "sum", log_scale = False, centered=False, Titre = None, REF_COMP=None, RETURN=False, **attrs) :
@@ -420,7 +949,7 @@ def comp_budget_bar(var, rundict, run_exp_list, Meth="None", yr="None", Convert=
 
 
 
-def glob_budget_2D(cube, op = "sum") :
+def glob_budget_2D(cube, op = "sum",meshfile="/noc/users/jpp1m13/WORKING/UKESM/MESH/eORCA1/NEMO42/mesh_mask.nc") :
 
     def glob_sum(cube, area, op = "sum") :
         #try :
@@ -451,7 +980,6 @@ def glob_budget_2D(cube, op = "sum") :
 
     ## all vars are 2D inventory, only needs 2D area and sum-up
     #meshfile="/noc/users/jpp1m13/WORKING/UKESM/MESH/eORCA1/mesh_mask.nc"
-    meshfile="../MESH/eORCA1/mesh_mask.nc"
     e1t = prep_cube(meshfile, "e1t")
     e2t = prep_cube(meshfile, "e2t")
     area = e1t.data.copy()
@@ -465,7 +993,7 @@ def glob_budget_2D(cube, op = "sum") :
 
 
 
-def prod_graz_budget(file_name, run_ttl) :
+def prod_graz_budget(file_name, run_ttl,meshfile="/noc/users/jpp1m13/WORKING/UKESM/MESH/eORCA1/NEMO42/mesh_mask.nc") :
 
     def glob_sum(file_name, var, area) :
         try :
@@ -487,12 +1015,15 @@ def prod_graz_budget(file_name, run_ttl) :
     ## all vars are 2D inventory, only needs 2D area and sum-up
     try:
         ## running local
-	meshfile="../MESH/eORCA1/mesh_mask.nc"
-    Eexcept: 
+        #meshfile="../MESH/eORCA1/mesh_mask.nc"
+        e1t = prep_cube(meshfile, "e1t")
+        e2t = prep_cube(meshfile, "e2t")
+    except:
         ## on NOC system 
-        meshfile="/noc/users/jpp1m13/WORKING/UKESM/MESH/eORCA1/mesh_mask.nc"
+        meshfile="/noc/users/jpp1m13/WORKING/UKESM/MESH/eORCA1/NEMO42/mesh_mask.nc"
     e1t = prep_cube(meshfile, "e1t")
     e2t = prep_cube(meshfile, "e2t")
+        ##
     area = e1t.data.copy()
     area = e1t.data * e2t.data
 
@@ -551,7 +1082,7 @@ class subplot_POC_flx_monthprofiles(object):
                  fig=None, iii=1, jjj=1, rect=1, **attrs):
 
         """
-Make the monthly profile subplots
+    Make the monthly profile subplots
         """
 
         import matplotlib.pyplot as plt
@@ -563,7 +1094,7 @@ Make the monthly profile subplots
         import iris.quickplot as qplt
         import mpl_toolkits.axisartist.floating_axes as FA
 
-        meshfile="/noc/users/jpp1m13/WORKING/UKESM/MESH/eORCA1/mesh_mask.nc"
+        meshfile="/noc/users/jpp1m13/WORKING/UKESM/MESH/eORCA1/NEMO42/mesh_mask.nc"
         e1t = prep_cube(meshfile, "e1t")
         e2t = prep_cube(meshfile, "e2t")
         area2D = e1t.data.copy()
@@ -732,7 +1263,7 @@ class subplot_PAC_grazing_monthprofiles(object):
                  fig=None, iii=1, jjj=1, rect=1, LOGSCALE=True,**attrs):
 
         """
-Make the monthly profile subplots
+    Make the monthly profile subplots
         """
 
         import matplotlib.pyplot as plt
@@ -744,7 +1275,7 @@ Make the monthly profile subplots
         import iris.quickplot as qplt
         import mpl_toolkits.axisartist.floating_axes as FA
 
-        meshfile="/noc/users/jpp1m13/WORKING/UKESM/MESH/eORCA1/mesh_mask.nc"
+        meshfile="/noc/users/jpp1m13/WORKING/UKESM/MESH/eORCA1/NEMO42/mesh_mask.nc"
         e1t = prep_cube(meshfile, "e1t")
         e2t = prep_cube(meshfile, "e2t")
         area2D = e1t.data.copy()
@@ -916,7 +1447,7 @@ class subplot_3Dvar_profiles_diff(object):
                  YLIM=[0.0, 5000], **attrs):
 
         """
-Make the monthly profile subplots
+        Make the monthly profile subplots
         """
 
         import matplotlib.pyplot as plt
@@ -928,7 +1459,7 @@ Make the monthly profile subplots
         import iris.quickplot as qplt
         import mpl_toolkits.axisartist.floating_axes as FA
 
-        meshfile="/noc/users/jpp1m13/WORKING/UKESM/MESH/eORCA1/mesh_mask.nc"
+        meshfile="/noc/users/jpp1m13/WORKING/UKESM/MESH/eORCA1/NEMO42/mesh_mask.nc"
         e1t = prep_cube(meshfile, "e1t")
         e2t = prep_cube(meshfile, "e2t")
         area2D = e1t.data.copy()
@@ -1116,7 +1647,7 @@ class subplot_3Dvar_monthprofiles(object):
                  YLIM=[0.0, 5000], **attrs):
 
         """
-Make the monthly profile subplots
+       Make the monthly profile subplots
         """
 
         import matplotlib.pyplot as plt
@@ -1128,7 +1659,7 @@ Make the monthly profile subplots
         import iris.quickplot as qplt
         import mpl_toolkits.axisartist.floating_axes as FA
 
-        meshfile="/noc/users/jpp1m13/WORKING/UKESM/MESH/eORCA1/mesh_mask.nc"
+        meshfile="/noc/users/jpp1m13/WORKING/UKESM/MESH/eORCA1/NEMO42/mesh_mask.nc"
         e1t = prep_cube(meshfile, "e1t")
         e2t = prep_cube(meshfile, "e2t")
         area2D = e1t.data.copy()
@@ -1295,7 +1826,7 @@ class subplot_NormPOCup_monthprofiles(object):
                  Martin=True, Manage=True, **attrs):
 
         """
-Make the monthly profile subplots
+        Make the monthly profile subplots
         """
 
         import matplotlib.pyplot as plt
@@ -1307,7 +1838,7 @@ Make the monthly profile subplots
         import iris.quickplot as qplt
         import mpl_toolkits.axisartist.floating_axes as FA
 
-        meshfile="/noc/users/jpp1m13/WORKING/UKESM/MESH/eORCA1/mesh_mask.nc"
+        meshfile="/noc/users/jpp1m13/WORKING/UKESM/MESH/eORCA1/NEMO42/mesh_mask.nc"
         e1t = prep_cube(meshfile, "e1t")
         e2t = prep_cube(meshfile, "e2t")
         area2D = e1t.data.copy()
@@ -1507,7 +2038,7 @@ class subplot_NormPOC_monthprofiles(object):
                  Martin=True, Manage=True, Norm=True, YLIM=[0.0, 5000], **attrs):
 
         """
-Make the monthly profile subplots
+        Make the monthly profile subplots
         """
 
         import matplotlib.pyplot as plt
@@ -1519,7 +2050,7 @@ Make the monthly profile subplots
         import iris.quickplot as qplt
         import mpl_toolkits.axisartist.floating_axes as FA
 
-        meshfile="/noc/users/jpp1m13/WORKING/UKESM/MESH/eORCA1/mesh_mask.nc"
+        meshfile="/noc/users/jpp1m13/WORKING/UKESM/MESH/eORCA1/NEMO42/mesh_mask.nc"
         e1t = prep_cube(meshfile, "e1t")
         e2t = prep_cube(meshfile, "e2t")
         area2D = e1t.data.copy()
@@ -1706,7 +2237,7 @@ class subplot_POC_monthprofiles(object):
                  fig=None, ax=None, iii=1, jjj=1, rect=1, **attrs):
 
         """
-Make the monthly profile subplots
+        Make the monthly profile subplots
         """
 
         import matplotlib.pyplot as plt
@@ -2194,34 +2725,40 @@ def subplot_short(var, rundict, run_exp_list, Meth="None", yr="None", **attrs) :
 
 
 
+def subplot_diff_list(var, rundict_list, loc_list, filetype="ptrc", Meth="None", yr="None", log_scale = False, outfreq = "1M", centered=False, region=None, Epipel=False, SHOW=False, **attrs) :
+               #(var, rundict, run_exp_list, Meth="None", yr="None", log_scale = False, centered=False, region=None, **attrs) :
 
-def subplot_diff(var, rundict, run_exp_list, Meth="None", depth_extract = 100, yr="None", log_scale = False, centered=False, Convert=1.0, ConvUnit = "None", LOC="Atl", Titre=None, REF_COMP=None, **attrs) :
-    ## depth_extract :  choices are :
-    ##            1 ; 100; 200; 500 and 1000 m depth
-    ##
     print(var)
 
     # ref_file_name, interm_file_name, final_filename, ref_ttl, int_ttl, fin_ttl,
-    runref = run_exp_list[0]
+    runref = loc_list[0]
+    print("loc_list : ",loc_list)
+
+    runnb = rundict_list[0]
+            #
+            #ax1 = fig.add_subplot(iii, jjj, rect)
+            #
+    modclass = runclass(runnb)
+            #
+    print(filetype)
+    if filetype=="ptrc" :
+        rundict        = modclass.dict_ptrc
+    elif filetype=="diad" :
+        rundict        = modclass.dict_diad
+    elif filetype=="grid" :
+        rundict        = modclass.dict_grid
+    print(rundict)
     ref_file_name = rundict[runlist[runref]]
-    ref_ttl       = runlist[runref]
-    ##
-    if REF_COMP is not None :
-        runcomp = REF_COMP
-        ref_comp_fname = rundict[runcomp]
-        comp_ttl       = runcomp
-    else :
-        ref_comp_fname = None
-    ##
-    if 'Epipel' in attrs:
-        Epipel_plot = attrs['Epipel']
-    elif var in ["ZME", "ZMI", "ZMP", "PHN", "PHD", "CHL", "TPP3", "ALK"] :
+    ref_ttl       = modclass.name
+
+
+    if var in ["ZME", "ZMI", "ZMP", "PHN", "PHD", "CHL", "TPP3"] :
         Epipel_plot = True
     else :
-        Epipel_plot = False
+        Epipel_plot = Epipel
 
-    #if var in ["CHL", "PP", "CHN", "CHD", "PHN", "PHD", "DIN"] and Meth=="Surface":
-    #    log_scale = True
+    if var in ["CHL", "PP", "CHN", "CHD", "PHN", "PHD", "DIN"] and Meth=="Surface":
+        log_scale = True
 
     plt.rcParams.update({'font.size': 12})
     cmap0 = plt.cm.get_cmap('viridis', 15)
@@ -2238,16 +2775,12 @@ def subplot_diff(var, rundict, run_exp_list, Meth="None", depth_extract = 100, y
 
     if Meth == "None" :
         f_name = "Surf_plot_" + var
-    elif Meth == "2D_Extract" :
-        f_name = "Surf_plot_" + var + "_" + str(depth_extract) +"m"
     else :
         f_name = "Surf_plot_" + var + "_" + Meth
     if yr != "None" :
         f_name = f_name + "_" + yr
     if region is not None :
         f_name = f_name + "_" + region
-    if proj is not None :
-        f_name = f_name + "_" + proj
 
     ## regional plot :
     if region == "Amazon" :
@@ -2270,7 +2803,7 @@ def subplot_diff(var, rundict, run_exp_list, Meth="None", depth_extract = 100, y
         #jj_min=45
         #jj_max=55
 
-    comp_nb = np.size(run_exp_list) - 1
+    comp_nb = (np.size(loc_list)*np.size(rundict_list)) - 1
     ## prep subplot display
     if comp_nb == 0 :
         iii=1
@@ -2298,15 +2831,538 @@ def subplot_diff(var, rundict, run_exp_list, Meth="None", depth_extract = 100, y
     fig = plt.figure(figsize=(5*jjj,5*iii))
     #fig = plt.figure(figsize=(5*6,5*6))
     ## no pac
-    cube = prep_cube(ref_file_name, var, REF_COMP=ref_comp_fname, Obs=Obs)
-    ##
+
+    rect=1
+
+    if Meth=="OneD" or Meth=="surface_OneD" :
+        oneD=True
+    else :
+        oneD=False
+
+      ## no pac
+    cube = prep_cube(ref_file_name, var, oneD=oneD)
+                #
     if region is not None :
-        longitt = read_cube(meshfile,"nav_lon", mask = False)
-        latitt  = read_cube(meshfile,"nav_lat", mask = False)
+        #c_coord = prep_cube("../VESTA/Out/medusa_cn857o_1y_20301201-20311201_ptrc-T.nc","SIL")
+        #longit = c_coord.coord('longitude').points
+        #latit = c_coord.coord('latitude').points
+        longitt = read_cube("/noc/users/jpp1m13/WORKING/UKESM/","nav_lon", mask = False)
+        latitt  = read_cube("/noc/users/jpp1m13/WORKING/UKESM/","nav_lat", mask = False)
         cube.coord('latitude').points = latitt.data
         cube.coord('longitude').points = longitt.data
         longit = longitt[jj_min:jj_max,ii_min:ii_max]
         latit  = latitt[jj_min:jj_max,ii_min:ii_max]
+
+    if Meth=="Surface" or Meth=="surface_OneD" :
+        cube = prep_cube_surf(cube, oneD=oneD)
+    elif Meth=="Vert_Inv":
+        cube = prep_cube_vert_inv(cube)
+        #aaa = cube.data.min()
+        #bbb = cube.data.max()
+    if 'Min' in attrs:
+        aaa = attrs['Min']
+    else :
+        aaa = np.percentile(cube.data.compressed(), 5)
+    if 'Max' in attrs:
+        bbb = attrs['Max']
+    else :
+        bbb = np.percentile(cube.data.compressed(), 95)
+    if centered :
+        #ccc = (-aaa + bbb)/2
+        ccc = np.max([-aaa, bbb])
+        aaa = -ccc
+        bbb = ccc
+        cmap = cmap1
+    else :
+        cmap = cmap0
+    ### plot :
+    if Meth=="Transect":
+        if 'Min' in attrs:
+            aaa = attrs['Min']
+        else :
+            aaa = np.percentile(cube.data[0,:,:,262].compressed(), 5)
+        if 'Max' in attrs:
+            bbb = attrs['Max']
+        else :
+            bbb = np.percentile(cube.data[0,:,:,262].compressed(), 95)
+        #
+        plot = subplot_proj_Orcagrid(cube[0,:,:,262], fig = fig, iii=iii, jjj=jjj, rect = rect, Proj = False, Epipel_plot = Epipel_plot, colorbar = True, v_min= aaa,v_max=bbb, log_scale=log_scale )
+    elif Meth=="OneD" or Meth=="surface_OneD":
+        if 'Min' in attrs:
+            aaa = attrs['Min']
+        else :
+            aaa = np.percentile(cube.data[...,0,0].compressed(), 5)
+        if 'Max' in attrs:
+            bbb = attrs['Max']
+        else :
+            bbb = np.percentile(cube.data[...,0,0].compressed(), 95)
+        #
+        plot = subplot_timeseries(cube[...,0,0], fig = fig, iii=iii, jjj=jjj, rect = rect, Proj = False, Epipel_plot = Epipel_plot, colorbar = True, v_min= aaa,v_max=bbb, outfreq=modclass.outfreq, log_scale=log_scale )
+        if cube.ndim == 4 :
+            plot.y_label("Depth (m)")
+        elif cube.ndim < 4 :
+            plot.y_label(cube.units)
+            plot.x_label("time in Year")
+    else:
+        plot = subplot_proj_Orcagrid(cube[0,:,:], fig = fig, iii=iii, jjj=jjj, rect = rect, colorbar = True, v_min= aaa,v_max=bbb, log_scale=log_scale )
+    plot.subtitle(modclass.name)
+
+    loop = 1
+
+    for runnb in rundict_list[1:] :
+
+            #runnb = rundict_list[0]
+            #
+            #ax1 = fig.add_subplot(iii, jjj, rect)
+            #
+        modclass = runclass(runnb)
+            #
+        print(filetype)
+        if filetype=="ptrc" :
+            rundict        = modclass.dict_ptrc
+        elif filetype=="diad" :
+            rundict        = modclass.dict_diad
+        elif filetype=="grid" :
+            rundict        = modclass.dict_grid
+        print(rundict)
+        comp_file_name = rundict[runlist[runref]]
+        comp_ttl       = modclass.name
+
+
+        # no_speed_pref
+        cube = prep_cube(comp_file_name, var, oneD=oneD)
+
+        if log_scale :
+            ## Make sure there are no neg values
+            cube.data = ma.masked_where(cube.data <= 0.0, cube.data )
+        if Meth=="Surface" or Meth=="surface_OneD" :
+            cube = prep_cube_surf(cube, oneD=oneD)
+        elif Meth=="Vert_Inv":
+            cube = prep_cube_vert_inv(cube)
+        ### plot :
+        if comp_nb < 3 :
+            rect = loop+1
+        else :
+            rect = (2 * loop)+1
+        ##
+        if Meth=="Transect":
+            plot = subplot_proj_Orcagrid(cube[0,:,:,262], fig = fig, iii=iii, jjj=jjj, rect=rect, Proj = False, Epipel_plot = Epipel_plot, colorbar = True, v_min= aaa,v_max=bbb, cmap=cmap, log_scale=log_scale)
+        elif Meth=="OneD" or Meth=="surface_OneD":
+            plot = subplot_timeseries(cube[...,0,0], fig = fig, iii=iii, jjj=jjj, rect = rect, Proj = False, Epipel_plot = Epipel_plot, colorbar = True, v_min= aaa,v_max=bbb, outfreq=modclass.outfreq, log_scale=log_scale )
+            if cube.ndim == 4 :
+                plot.y_label("Depth (m)")
+            elif cube.ndim < 4 :
+                plot.y_label(cube.units)
+                plot.x_label("time in Year")
+        elif region is None :
+            plot = subplot_proj_Orcagrid(cube[0,:,:], fig = fig, iii=iii, jjj=jjj, rect=rect, colorbar = True, v_min= aaa,v_max=bbb, cmap=cmap, log_scale=log_scale )
+        else :
+            plot = subplot_proj_regional(cube[0,jj_min:jj_max,ii_min:ii_max], fig = fig, iii=iii, jjj=jjj, rect=rect, colorbar = True, v_min= aaa,v_max=bbb, cmap=cmap, log_scale=log_scale, proj=region, longit=longit.data, latit=latit.data )
+        plot.subtitle(modclass.name)
+        #plot.subtitle(comp_ttl)
+        #####
+        ##
+        # Diff :
+        cube = prep_cube_diff(ref_file_name, comp_file_name, var, oneD=oneD)
+        #if region is None :
+        #    cube = prep_cube_diff(ref_file_name, comp_file_name, var)
+        #else :
+        #    cube_tmp = prep_cube_diff(ref_file_name, comp_file_name, var)
+        #    cube = cube_tmp[...,jj_min:jj_max,ii_min:ii_max].copy()
+
+        if Meth=="Surface"or Meth=="surface_OneD" :
+            cube = prep_cube_surf(cube, oneD=oneD)
+        elif Meth=="Vert_Inv":
+            cube = prep_cube_vert_inv(cube)
+        ### get diff min max
+        if loop == 1 :
+            #aaa_d = cube.data.min()
+            #bbb_d = cube.data.max()
+            #ccc = np.max([- aaa_d, bbb_d])
+            if 'Min_diff' in attrs:
+                aaa_d = attrs['Min_diff']
+            elif Meth=="OneD" or Meth=="surface_OneD":
+                    aaa_d = np.percentile(cube.data[...,0,0].compressed(), 5)
+            else :
+
+                cube.data = ma.masked_where(cube.data == np.nan, cube.data )
+                if region is None :
+                    aaa_d = np.percentile(cube.data.compressed(), 2)
+                else :
+                    aaa_d = np.percentile(cube.data[...,jj_min:jj_max,ii_min:ii_max].compressed(), 2)
+
+            if 'Max_diff' in attrs:
+                bbb_d = attrs['Max_diff']
+            elif Meth=="OneD" or Meth=="surface_OneD":
+                bbb_d = np.percentile(cube.data[...,0,0].compressed(), 95)
+            else :
+                cube.data = ma.masked_where(cube.data == np.nan, cube.data )
+                if region is None :
+                    bbb_d = np.percentile(cube.data.compressed(), 98)
+                else :
+                    bbb_d = np.percentile(cube.data[...,jj_min:jj_max,ii_min:ii_max].compressed(), 98)
+            #
+            #ccc = (-aaa_d + bbb_d)/2
+            ccc = np.max([-aaa_d, bbb_d])
+        ### plot :
+        if comp_nb < 3 :
+            rect = loop + comp_nb + 2
+        else :
+            rect = (2 * loop) + 2
+        ##
+
+        if Meth=="Transect":
+            if loop == 1 :
+                if 'Min_diff' in attrs:
+                    aaa_d = attrs['Min_diff']
+                else :
+                    aaa_d = np.percentile(cube.data[0,:,:,262].compressed(), 2)
+                if 'Max_diff' in attrs:
+                    bbb_d = attrs['Max_diff']
+                else :
+                    bbb_d = np.percentile(cube.data[0,:,:,262].compressed(), 98)
+                #
+                ccc = np.max([- aaa_d, bbb_d])
+                #ccc = (-aaa_d + bbb_d)/2
+            plot = subplot_proj_Orcagrid(cube[0,:,:,262], fig = fig, iii=iii, jjj=jjj, rect=rect, Proj = False, Epipel_plot = Epipel_plot, colorbar = True, cmap = cmap1, v_min= -ccc,v_max=ccc)
+        elif Meth=="OneD" or Meth=="surface_OneD":
+            plot = subplot_timeseries(cube[...,0,0], fig = fig, iii=iii, jjj=jjj, rect = rect, Proj = False, Epipel_plot = Epipel_plot, colorbar = True, cmap = cmap1, v_min= -ccc,v_max=ccc, outfreq=modclass.outfreq, log_scale=log_scale )
+            if cube.ndim == 4 :
+                plot.y_label("Depth (m)")
+            elif cube.ndim < 4 :
+                plot.y_label(cube.units)
+                plot.x_label("time in Year")
+        elif region is None :
+            plot = subplot_proj_Orcagrid(cube[0,:,:], fig = fig, iii=iii, jjj=jjj, rect=rect, colorbar = True, cmap = cmap1, v_min= -ccc,v_max=ccc)
+        else :
+            plot = subplot_proj_regional(cube[0,jj_min:jj_max,ii_min:ii_max], fig = fig, iii=iii, jjj=jjj, rect=rect, colorbar = True, cmap = cmap1, v_min= -ccc,v_max=ccc, proj=region, longit=longit.data, latit=latit.data)
+
+        plot.subtitle(comp_ttl + " minus " + ref_ttl)
+        # ++ loop
+        loop = loop + 1
+    ## End loop
+
+
+    plt.suptitle(cube.long_name, size=16)
+    plt.rcParams.update({'font.size': 28})
+    plt.savefig(f_name)
+    if SHOW :
+        plt.show()
+
+
+
+
+
+
+
+
+
+
+
+def subplot_diff(var, rundict, runlist, run_exp_list, Meth="None", depth_extract = 100, yr="None", Regrid = False, NEW_regrid=False, MASK=None, MASK_ZERO=False, SINGLE_PLOTS=False, COAST_LINE=True, log_scale = False, EPIPEL=None, centered=False, region=None, proj=None, Obs= False, meshmask="/noc/users/jpp1m13/WORKING/UKESM/MESH/eORCA1/NEMO42/eORCA100_masks.nc", Convert=1.0, ConvUnit = "None", LOC="Atl", Titre=None, REF_COMP=None, SHOW=False, **attrs) :
+    '''
+    Subplot Diff :
+    called as subplot_diff(var,
+                           rundict,
+                           run_exp_list,
+                           Meth="None",
+                           depth_extract = 100,
+                           yr="None",
+                           Regrid = False,
+                           MASK=None,
+                           MASK_ZERO=False,
+                           SINGLE_PLOTS=False,
+                           COAST_LINE=True,
+                           log_scale = False,
+                           EPIPEL = None,
+                           centered=False,
+                           region=None, 
+                           proj=None, 
+                           Obs= False, 
+                           meshmask="../MESH/eORCA1/eORCA100_masks.nc",
+                           Convert=1.0,
+                           ConvUnit = "None",
+                           LOC="Atl",
+                           Titre=None,
+                           REF_COMP=None,
+                           **attrs)                           
+    With :
+    -- Var the variables to plot as in the netcdf files
+    -- rundict : dictionary with all files we could possibly compare
+    -- run_exp_list : number of the experiments from rundict to compare. the first one being the reference.
+    -- Meth could be :
+            "Surface"    : extract surface 2D field if not already 2D
+            "Vert_Inv"   : perform a vertical sum
+            "2D_Extract" : extract a specific depth -- triggers depth_extract (1 ; 100; 200; 500 and 1000 m depth)
+            "Long_Avg"   : perform avg along longitude (results on depth * lat array)
+            "Lat_Avg"    : perform avg along latitude (results on depth * long array)
+            "Atl_Pac_Lat": Perform Long avg in Atl and Pac ocean and stick them in one plot.
+                           overide Mask.
+            "Atl_Pac_hov": Perform surface Atl_Pac_Lat average for hovmoller plot.
+    -- depth_extract : in m ; used if Meth is "2D_extract; could be 1, 100, 200, 4500, 1000
+    -- Regrid : set to True to regrid on 1x1 regular (WOA like) grid -- regridded files are masked with MASK, and saved.
+                reggrided files are read from previous saved file if it exists.
+                Renew the calculation with NEW_regrid=True
+    -- NEW_regrid : don't read the saved regrided file, re-do the regrid and overwrite the saved nc for future use.
+    -- MASK : apply a Mask if not None. could be set as :
+          wor_msk  ;
+          atl_msk  ;
+          pac_msk  ;
+          ind_msk  ;
+          sou_msk  ;
+          arc_msk  ;
+          all_atl  ;
+          all_pac  ;
+          all_ind  ;
+          nor_atl  ;
+          sou_atl  ;
+          nor_pac  ;
+          sou_pac  ;
+          atl_sou  ;
+          pac_sou  ;
+          ind_sou  ;
+          msk_100  ;
+          msk_200  ;
+    -- MASK_ZERO : mask 0 values -- Masks are not based on 0 values otherwise, which is good, but one might want that sometimes
+    -- SINGLE_PLOTS : produce all plots individually and not as joined subplots.
+    -- COAST_LINE   : Add the coastline on the map.
+    -- EPIPEL : set to True to plot sections or profiles down to 500m depth.
+                if set to False will plot the whole vertical depth
+                if left as None, will automatically set as True for var in "ZME", "ZMI", "ZMP", "PHN", "PHD", "CHL", "TPP3"
+    -- log_scale : Set to True to plot with log colorbar
+    -- centered  : Set to True to plot with centered colorbar (True for the difference plots)
+    -- region : for specific regional plots or analysis. can be :
+               "Amazon", "Bengal", "UKshelv", "NorthOrtho" or "NorthPolarStereo" 
+    -- proj : possible plot projections; to be chosen between: 
+            'Mollweide','Robinson','Mollweide_pac','Mollweide_ind','PlateCarree',
+            'NorthPolarStereo','SouthPolarStereo','Orthographic',
+            SouthOrtho','NorthOrtho','OrthoAtl','OrthoPac','OrthoInd',
+            'Amazon','Bengal,'UKshelv','PlateCarree'
+    -- Obs : to be set as True if the file to read is not standard NEMO outputs
+    -- meshmask : path and name of the mesh mask nc file
+    -- Convert : convertion Factor (default is 1.0)
+    -- ConvUnit : Resulting unit once converted (used if not None)
+    -- LOC : used if Meth is "transect". could be :
+        "Atl" for an Atlantic section
+        "Pac" for a Pacific section
+    -- Titre : to put a specific (Non default) title onto the final plot
+    -- REF_COMP : Only used for Alk efficiency calculation.
+    -- SHOW    :  print the plot on screen at run-time if True. (stop the script from running)
+    -- Extra Optional Arguments to put at the end :
+        Min (Minimum value for Colorbar)
+        Max (Maximum value for Colorbar)
+        Min_diff (Minimum value for comparison plot Colorbar)
+        Max_diff (Minimum value for comparison plot Colorbar)
+    '''
+    ## depth_extract :  choices are :
+    ##            1 ; 100; 200; 500 and 1000 m depth
+    ##
+    print(var)
+
+    # ref_file_name, interm_file_name, final_filename, ref_ttl, int_ttl, fin_ttl,
+    runref = run_exp_list[0]
+    ref_file_name = rundict[runlist[runref]]
+    ref_ttl       = runlist[runref]
+    ##
+    if REF_COMP is not None :
+        runcomp = REF_COMP
+        ref_comp_fname = rundict[runcomp]
+        comp_ttl       = runcomp
+    else :
+        ref_comp_fname = None
+    ##
+    if EPIPEL is not None:
+        Epipel_plot = EPIPEL
+    elif var in ["ZME", "ZMI", "ZMP", "PHN", "PHD", "CHL", "TPP3"] :
+        Epipel_plot = True
+    else :
+        Epipel_plot = False
+
+    #if var in ["CHL", "PP", "CHN", "CHD", "PHN", "PHD", "DIN"] and Meth=="Surface":
+    #    log_scale = True
+
+    plt.rcParams.update({'font.size': 12})
+    #cmap0 = plt.cm.get_cmap('viridis', 15)
+    cmap0 = plt.cm.get_cmap('turbo', 30)
+    #cmap1 = plt.cm.get_cmap('RdBu', 15)
+    cmap1 = plt.cm.get_cmap('RdBu_r', 30)
+    cmap3 = plt.cm.get_cmap('RdBu', 30)
+    cmap2 = plt.cm.get_cmap('viridis_r', 30)
+
+    cmap0.set_bad(color='white')
+    cmap1.set_bad(color='white')
+    cmap2.set_bad(color='gray')
+    cmap3.set_bad(color='white')
+
+    if Meth == "None" :
+        f_name = "plot_" + var
+    elif Meth == "Surface" :
+        f_name = "plot_" + var + "_Surf_"
+    elif Meth == "2D_Extract" :
+        f_name = "plot_" + var + "_" + str(depth_extract) +"m"
+    else :
+        f_name = "plot_" + var + "_" + Meth
+    if yr != "None" :
+        f_name = f_name + "_" + yr
+    if Regrid:
+        f_name = f_name + "_Regridded"
+    if MASK is not None :
+        f_name = f_name + "_" + MASK
+    if region is not None :
+        f_name = f_name + "_" + region
+    if proj is not None :
+        f_name = f_name + "_" + proj
+
+    ## regional plot :
+    if region == "Amazon" :
+        jj_min = 175
+        jj_max = 220
+        ii_min = 220
+        ii_max = 260
+    elif region == "Bengal" :
+        jj_min = 200
+        jj_max = 230
+        ii_min = 0
+        ii_max = 30
+    elif region == "UKshelv" :
+        jj_min = 250
+        jj_max = 280
+        ii_min = 275
+        ii_max = 295
+        #ii_min=-7
+        #ii_max=2
+        #jj_min=45
+        #jj_max=55
+    elif region == "NorthOrtho" or region == "NorthPolarStereo":
+        jj_min = 275
+        jj_max = 332
+        ii_min = 0
+        ii_max = 361
+
+    comp_nb = np.size(run_exp_list) - 1
+    ## prep subplot display
+    if (comp_nb == 0) or SINGLE_PLOTS :
+        iii=1
+        jjj=1
+    elif comp_nb == 1 :
+        iii=2
+        jjj=2
+    elif comp_nb == 2 :
+        iii=2
+        jjj=3
+    elif comp_nb == 3 :
+        iii=2
+        jjj=4
+    elif 4 <= comp_nb <= 5 :
+        iii=3
+        jjj=4
+    elif 6 <= comp_nb <= 7 :
+        iii=4
+        jjj=4
+    elif 8 <= comp_nb <= 11 :
+        iii=4
+        jjj=6
+
+
+    ##
+    ## define fig with size
+    if SINGLE_PLOTS :
+        fig = None
+    elif Meth == "Atl_Pac_Lat" :
+        fig = plt.figure(figsize=(20*jjj,10*iii))
+    elif Meth == "Atl_Pac_hov" :
+        fig = plt.figure(figsize=(10*jjj,20*iii))
+    else :
+        fig = plt.figure(figsize=(10*jjj,10*iii))
+    #fig = plt.figure(figsize=(5*6,5*6))
+    ##
+    ## Want the colorbar on the right side for singlr plots :
+    if SINGLE_PLOTS :
+        location = "right"
+    else :
+        location = None
+
+    ## Force Mask zero to be false for reggriding (masks everything otherwise-- need to check why): 
+    if "Atl_Pac" in Meth or Regrid == True:
+        MASK_ZERO=False
+    ##
+    ##
+    ## Start :
+    ## Load the first (ref) var :
+    if Obs is True : 
+        ref_comp_fname = rundict[runlist[1]]
+        #
+        ## need the diad file :
+        ref_comp_fname = diad_replace(ref_comp_fname)
+        ##
+    if Meth=="Atl_Pac_hov":
+        cube = prep_cube_Atl_Pac_hov_from_monthly(ref_file_name, var, runlist, run_nb=runref, REF_COMP=ref_comp_fname, Obs=Obs,MASK_ZERO=MASK_ZERO ,NEW_regrid=NEW_regrid)
+        ##
+    else:
+        cube = prep_cube(ref_file_name, var, REF_COMP=ref_comp_fname, Obs=Obs,MASK_ZERO=MASK_ZERO )
+    
+    if Obs is True : 
+        # need to re-init ref_comp_fname or it will break the rest of the code.
+        ref_comp_fname = None
+    ##
+    if region is not None :
+        try:
+            longitt = read_cube(meshfile,"nav_lon", mask = False)
+            latitt  = read_cube(meshfile,"nav_lat", mask = False)
+            cube.coord('latitude').points = latitt.data
+            cube.coord('longitude').points = longitt.data
+            if region == "NorthOrtho" or region == "NorthPolarStereo":
+                longit = longitt[jj_min:jj_max,ii_min:ii_max]
+                latit  = latitt[jj_min:jj_max,ii_min:ii_max]
+            else :
+                longit = longitt[jj_min+1:jj_max+1,ii_min+1:ii_max+1]
+                latit  = latitt[jj_min:jj_max,ii_min:ii_max]
+        except :
+            print(" !!! no lat-long attribute in the file... try without")
+            longitt = read_cube(meshmask,"nav_lon", mask = False)
+            latitt  = read_cube(meshmask,"nav_lat", mask = False)
+            #cube.coord('latitude').points = latitt.data
+            #cube.coord('longitude').points = longitt.data
+            if region == "NorthOrtho" or region == "NorthPolarStereo":
+                longit = longitt[jj_min:jj_max,ii_min:ii_max]
+                latit  = latitt[jj_min:jj_max,ii_min:ii_max]
+            else :
+                longit = longitt[jj_min+1:jj_max+1,ii_min+1:ii_max+1]
+                latit  = latitt[jj_min:jj_max,ii_min:ii_max]
+
+    if "Atl_Pac" not in Meth:
+        ## check here to fix the NEMO4.2 log/lat not being proprely defined problem...
+        try :
+            llat = cube.coord('latitude').points
+            ## if no error raised, file is OK
+        except :
+            ## if not OK, file needs to be fixed :
+            cube = fix_nemo_cube(cube)
+            ## pas completement sur que ca marche...
+            ##llat = cube.coord('latitude').points
+    ##
+    ##
+    if Meth=="Surface":
+        try :
+            cube = prep_cube_surf(cube)
+            if cube is None :
+                print("cube ref surface gives None")
+        except :
+            print("already 2D -- ", cube.data.shape ," no need to extract ")
+    ##
+    if Meth != "Atl_Pac_Lat" or Meth != "Atl_Pac_hov":
+        if MASK is not None :
+            cube = prep_Masked_cube(cube,MASK)
+            if cube is None :
+                print("cube ref Masking gives None")
+        ##
+        if Regrid :
+            print("Regridding cube_ref")
+            cube = regrid_ORCA(cube, runlist, Meth=Meth, run_nb=runref, MASK=MASK, NEW=NEW_regrid)
+            if cube is None :
+                print("cube ref Regrid gives None")
+            print("Regridded cube : ", cube.shape)
+            #print("cube_ref : ", cube_ref.shape)
     ##
     ### if needed convertion :
     cube.data = cube.data * Convert
@@ -2316,11 +3372,14 @@ def subplot_diff(var, rundict, run_exp_list, Meth="None", depth_extract = 100, y
     if log_scale :
         ## Make sure there are no neg values
         cube.data = ma.masked_where(cube.data <= 0.0, cube.data )
-    if Meth=="Surface":
+    if Meth=="Atl_Pac_Lat":
+        ## Does mask, regrid and stick atl pand PAC
         try :
-            cube = prep_cube_surf(cube)
+            cube = prep_cube_Atl_Pac(cube, runlist, run_nb=runref, NEW=NEW_regrid)
+            if cube is None :
+                print("cube ref Atl_Pac_Lat gives None")
         except :
-            print("already 2D -- ", cube.data.shape ," no need to extract ")
+            print("Atl-Pac average not working... -- ", cube.data.shape )
     elif Meth=="Vert_Inv":
         try :
             cube = prep_cube_vert_inv(cube)
@@ -2331,6 +3390,24 @@ def subplot_diff(var, rundict, run_exp_list, Meth="None", depth_extract = 100, y
             cube = prep_cube_extract_depth(cube, depth_extract)
         except :
             print(" already 2D var -- ", cube.data.shape )
+    elif Meth=="Long_Avg" :
+        try :
+            temp = cube.copy()
+            cube = temp.collapsed('longitude', iris.analysis.MEAN)
+            print("Average along longitude :")
+            print("Long avg cube : ", cube.shape)
+        except :
+            print("Failed Average along longitude :")
+            print(cube)
+    elif Meth=="Lat_Avg" :
+        try :
+            temp = cube.copy()
+            cube = temp.collapsed('latitude', iris.analysis.MEAN)
+            print("Average along latitude :")
+            print("Latg avg cube : ", cube.shape)
+        except :
+            print("Failed Average along latitude :")
+            print(cube)
     #aaa = cube.data.min()
     #bbb = cube.data.max()
     if 'Min' in attrs:
@@ -2379,17 +3456,37 @@ def subplot_diff(var, rundict, run_exp_list, Meth="None", depth_extract = 100, y
         else :
             bbb = np.percentile(cube.data[0,:,:,loci].compressed(), 98)
         #
-        plot = subplot_proj_Orcagrid(cube[0,:,:,loci], fig = fig, iii=iii, jjj=jjj, rect = 1,Proj = False, Epipel_plot = Epipel_plot, colorbar = True, v_min= aaa,v_max=bbb, cmap=cmap, log_scale=log_scale )
+        plot = subplot_proj_Orcagrid(cube[0,:,:,loci], fig = fig, iii=iii, jjj=jjj, rect = 1,Proj = False, location=location, Epipel_plot = Epipel_plot, colorbar = True, v_min= aaa,v_max=bbb, cmap=cmap, log_scale=log_scale )
+    elif ( Meth=="Long_Avg") or (Meth=="Lat_Avg")  :
+        plot = subplot_proj_Orcagrid(cube[0,:,:], fig = fig, iii=iii, jjj=jjj, rect=1, Proj = False, location=location, Epipel_plot = Epipel_plot, colorbar = True, v_min= aaa,v_max=bbb, cmap=cmap, log_scale=log_scale)
+    elif (Meth=="Atl_Pac_Lat")  :
+        plot = subplot_proj_Orcagrid(cube[0,:,0:-27], fig = fig, iii=iii, jjj=jjj, rect=1, Proj = False, location=location, Epipel_plot = Epipel_plot, Atl_Pac_section = True, colorbar = True, v_min= aaa,v_max=bbb, cmap=cmap, log_scale=log_scale)
+    elif (Meth=="Atl_Pac_hov")  :
+        plot = subplot_proj_Orcagrid(cube[:,0:-27], fig = fig, iii=iii, jjj=jjj, rect=1, Proj = False, location=location, Epipel_plot = False, Atl_Pac_section = True, colorbar = True, v_min= aaa,v_max=bbb, cmap=cmap, log_scale=log_scale)
     else:
         if region is None :
             if proj is None :
-                plot = subplot_proj_Orcagrid(cube[0,:,:], fig = fig, iii=iii, jjj=jjj, rect = 1,colorbar = True, v_min= aaa,v_max=bbb, cmap=cmap, log_scale=log_scale )
+                plot = subplot_proj_Orcagrid(cube[0,:,:], fig = fig, iii=iii, jjj=jjj, rect = 1,colorbar = True, COAST_LINE=COAST_LINE, location=location, v_min= aaa,v_max=bbb, cmap=cmap, log_scale=log_scale )
             else :
-                plot = subplot_proj_Orcagrid(cube[0,:,:], fig = fig, iii=iii, jjj=jjj, rect = 1,colorbar = True, v_min= aaa,v_max=bbb, cmap=cmap, log_scale=log_scale, proj=proj )
+                plot = subplot_proj_Orcagrid(cube[0,:,:], fig = fig, iii=iii, jjj=jjj, rect = 1,colorbar = True, COAST_LINE=COAST_LINE, location=location, v_min= aaa,v_max=bbb, cmap=cmap, log_scale=log_scale, proj=proj )
         else :
-            plot = subplot_proj_regional(cube[0,jj_min:jj_max,ii_min:ii_max], fig = fig, iii=iii, jjj=jjj, rect = 1,colorbar = True, v_min= aaa,v_max=bbb, cmap=cmap, log_scale=log_scale, proj=region, longit=longit.data, latit=latit.data )
-
-    plot.subtitle(ref_ttl)
+            plot = subplot_proj_regional(cube[0,jj_min:jj_max,ii_min:ii_max], fig = fig, iii=iii, jjj=jjj, rect = 1,colorbar = True, COAST_LINE=COAST_LINE, location=location, v_min= aaa,v_max=bbb, cmap=cmap, log_scale=log_scale, proj=region, longit=longit.data, latit=latit.data )
+    if SINGLE_PLOTS :
+        if (Meth=="Transect") or (Meth=="Long_Avg") or (Meth=="Atl_Pac_Lat") :
+            plot.y_label("Depth [m]")
+            plot.x_label("Latitude North [Degree]")
+        elif (Meth=="Atl_Pac_hov") :
+            plot.y_label("Latitude North [Degree]")
+            #plot.x_label("Time (month)")
+        elif  Meth=="Lat_Avg" :
+            plot.y_label("Depth [m]")
+            plot.x_label("Longitude East [Degree]")
+        ##
+        plt.savefig(f_name + ref_ttl, bbox_inches='tight', dpi=300)
+        if SHOW :
+            plt.show()
+    else :
+        plot.subtitle(ref_ttl)
 
     ### keep ref_cube
     cube_ref = cube.copy()
@@ -2401,7 +3498,46 @@ def subplot_diff(var, rundict, run_exp_list, Meth="None", depth_extract = 100, y
         comp_ttl       = runlist[compref]
 
         # no_speed_pref
-        cube = prep_cube(comp_file_name, var, REF_COMP=ref_comp_fname)
+        if Meth=="Atl_Pac_hov":
+            cube = prep_cube_Atl_Pac_hov_from_monthly(comp_file_name, var, runlist, run_nb=compref, REF_COMP=ref_comp_fname, MASK_ZERO=MASK_ZERO ,NEW_regrid=NEW_regrid)
+            ##
+        else :
+            cube = prep_cube(comp_file_name, var, REF_COMP=ref_comp_fname,MASK_ZERO=MASK_ZERO)
+        ##
+        #### Check anf fix NEMO4.2 nc file nc coord problem.N
+        if "Atl_Pac" not in Meth:
+            try :
+                llat = cube.coord('latitude').points
+                ## if no error raised, file is OK
+            except :
+                ## if not OK, file needs to be fixed :
+                cube = fix_nemo_cube(cube)
+                ## pas completement sur que ca marche...
+                ##llat = cube.coord('latitude').points
+        ##
+        if Meth=="Surface":
+            try :
+                cube = prep_cube_surf(cube)
+                if cube is None :
+                    print("cube comp Surface gives None")
+            except :
+                print("already 2D -", cube.data.shape ,"- no need to extract ")
+                #cube = prep_cube_surf(cube)
+        #
+        if Meth != "Atl_Pac_Lat" or Meth != "Atl_Pac_hov":
+            if MASK is not None :
+                cube = prep_Masked_cube(cube,MASK)
+                if cube is None :
+                    print("cube comp Masking gives None")
+            ##
+            if Regrid :
+                print("Regridding cube_ref")
+                cube = regrid_ORCA(cube, runlist, Meth=Meth, run_nb=compref, MASK=MASK, NEW=NEW_regrid)
+                if cube is None :
+                    print("cube comp Regrid gives None")
+                print("cube : ", cube.shape)
+                #print("cube_ref : ", cube_ref.shape)
+        ##
         ### if needed convertion :
         cube.data = cube.data * Convert
         if ConvUnit != "None" :
@@ -2410,12 +3546,13 @@ def subplot_diff(var, rundict, run_exp_list, Meth="None", depth_extract = 100, y
         if log_scale :
             ## Make sure there are no neg values
             cube.data = ma.masked_where(cube.data <= 0.0, cube.data )
-        if Meth=="Surface":
+        if Meth=="Atl_Pac_Lat":
             try :
-                cube = prep_cube_surf(cube)
+                cube = prep_cube_Atl_Pac(cube, runlist, run_nb=compref, NEW=NEW_regrid)
+                if cube is None :
+                    print("cube comp Atl_Pac_Lat gives None")
             except :
-                print("already 2D -", cube.data.shape ,"- no need to extract ")
-                #cube = prep_cube_surf(cube)
+                print("Atl-Pac average not working... -- ", cube.data.shape )
         elif Meth=="Vert_Inv":
             try :
                 cube = prep_cube_vert_inv(cube)
@@ -2426,24 +3563,65 @@ def subplot_diff(var, rundict, run_exp_list, Meth="None", depth_extract = 100, y
                 cube = prep_cube_extract_depth(cube, depth_extract)
             except :
                 print(" already 2D var -- ", cube.data.shape )
+        elif Meth=="Long_Avg" :
+            try :
+                temp = cube.copy()
+                cube = temp.collapsed('longitude', iris.analysis.MEAN)
+                print("Average along longitude :")
+                print(cube)
+            except :
+                print(" Failed Average along longitude :")
+                print(cube)
+        elif Meth=="Lat_Avg" :
+            try :
+                temp = cube.copy()
+                cube = temp.collapsed('latitude', iris.analysis.MEAN)
+                print("Average along latitude :")
+                print(cube)
+            except :
+                print(" Failed Average along latitude :")
+                print(cube)
         ### plot :
-        if comp_nb < 3 :
+        if SINGLE_PLOTS :
+            rect = 1
+        elif comp_nb < 3 :
             rect = loop+1
         else :
             rect = (2 * loop)+1
         ##
         if Meth=="Transect":
-            plot = subplot_proj_Orcagrid(cube[0,:,:,loci], fig = fig, iii=iii, jjj=jjj, rect=rect, Proj = False, Epipel_plot = Epipel_plot, colorbar = True, v_min= aaa,v_max=bbb, cmap=cmap, log_scale=log_scale)
+            plot = subplot_proj_Orcagrid(cube[0,:,:,loci], fig = fig, iii=iii, jjj=jjj, rect=rect, Proj = False, location=location, Epipel_plot = Epipel_plot, colorbar = True, v_min= aaa,v_max=bbb, cmap=cmap, log_scale=log_scale)
+        elif ( Meth=="Long_Avg") or (Meth=="Lat_Avg") :
+            plot = subplot_proj_Orcagrid(cube[0,:,:], fig = fig, iii=iii, jjj=jjj, rect=rect, Proj = False, location=location, Epipel_plot = Epipel_plot, colorbar = True, v_min= aaa,v_max=bbb, cmap=cmap, log_scale=log_scale)
+        elif (Meth=="Atl_Pac_Lat") :
+            plot = subplot_proj_Orcagrid(cube[0,:,0:-27], fig = fig, iii=iii, jjj=jjj, rect=rect, Proj = False, location=location, Epipel_plot = Epipel_plot, Atl_Pac_section = True, colorbar = True, v_min= aaa,v_max=bbb, cmap=cmap, log_scale=log_scale)
+        elif (Meth=="Atl_Pac_hov") :
+            plot = subplot_proj_Orcagrid(cube[:,0:-27], fig = fig, iii=iii, jjj=jjj, rect=rect, Proj = False, location=location, Epipel_plot = False, Atl_Pac_section = True, colorbar = True, v_min= aaa,v_max=bbb, cmap=cmap, log_scale=log_scale)
         else:
             if region is None :
                 if proj is None :
-                    plot = subplot_proj_Orcagrid(cube[0,:,:], fig = fig, iii=iii, jjj=jjj, rect=rect, colorbar = True, v_min= aaa,v_max=bbb, cmap=cmap, log_scale=log_scale )
+                    plot = subplot_proj_Orcagrid(cube[0,:,:], fig = fig, iii=iii, jjj=jjj, rect=rect, colorbar = True, location=location, COAST_LINE=COAST_LINE, v_min= aaa,v_max=bbb, cmap=cmap, log_scale=log_scale )
                 else :
-                    plot = subplot_proj_Orcagrid(cube[0,:,:], fig = fig, iii=iii, jjj=jjj, rect=rect, colorbar = True, v_min= aaa,v_max=bbb, cmap=cmap, log_scale=log_scale, proj=proj )
+                    plot = subplot_proj_Orcagrid(cube[0,:,:], fig = fig, iii=iii, jjj=jjj, rect=rect, colorbar = True, location=location, COAST_LINE=COAST_LINE, v_min= aaa,v_max=bbb, cmap=cmap, log_scale=log_scale, proj=proj )
             else :
-                plot = subplot_proj_regional(cube[0,jj_min:jj_max,ii_min:ii_max], fig = fig, iii=iii, jjj=jjj, rect=rect, colorbar = True, v_min= aaa,v_max=bbb, cmap=cmap, log_scale=log_scale, proj=region, longit=longit.data, latit=latit.data )
-
-        plot.subtitle(comp_ttl)
+                plot = subplot_proj_regional(cube[0,jj_min:jj_max,ii_min:ii_max], fig = fig, iii=iii, jjj=jjj, rect=rect, colorbar = True, location=location, COAST_LINE=COAST_LINE, v_min= aaa,v_max=bbb, cmap=cmap, log_scale=log_scale, proj=region, longit=longit.data, latit=latit.data )
+        ##
+        if SINGLE_PLOTS :
+            if (Meth=="Transect") or (Meth=="Long_Avg") or (Meth=="Atl_Pac_Lat") :
+                plot.y_label("Depth [m]")
+                plot.x_label("Latitude North [Degree]")
+            elif (Meth=="Atl_Pac_hov") :
+                plot.y_label("Latitude North [Degree]")
+                #plot.x_label("Time (month)")
+            elif  Meth=="Lat_Avg" :
+                plot.y_label("Depth [m]")
+                plot.x_label("Longitude East [Degree]")
+            ##
+            plt.savefig(f_name + comp_ttl, bbox_inches='tight', dpi=300)
+            if SHOW :
+                plt.show()
+        else :
+            plot.subtitle(comp_ttl)
         # Diff :
         ## keep comp cube
         cube_comp = cube.copy()
@@ -2478,24 +3656,37 @@ def subplot_diff(var, rundict, run_exp_list, Meth="None", depth_extract = 100, y
                 aaa_d = attrs['Min_diff']
             else :
                 cube.data = ma.masked_where(cube.data == np.nan, cube.data )
-                if region is None :
-                    aaa_d = np.percentile(cube.data.compressed(), 2)
-                else :
-                    aaa_d = np.percentile(cube.data[...,jj_min:jj_max,ii_min:ii_max].compressed(), 2)
-
+                try :
+                    if region is None :
+                        aaa_d = np.percentile(cube.data.compressed(), 2)
+                    else :
+                        aaa_d = np.percentile(cube.data[...,jj_min:jj_max,ii_min:ii_max].compressed(), 2)
+                except :
+                   print("can't get diff min-max for ", var)
+                   aaa_d = cube.data.min()
+                   # if region is None :
+                   #     aaa_d = np.percentile(cube.data.compressed(), 2)
+                   # else :
+                   #     aaa_d = np.percentile(cube.data[...,jj_min:jj_max,ii_min:ii_max].compressed(), 2) 
             if 'Max_diff' in attrs:
                 bbb_d = attrs['Max_diff']
             else :
                 cube.data = ma.masked_where(cube.data == np.nan, cube.data )
-                if region is None :
-                    bbb_d = np.percentile(cube.data.compressed(), 98)
-                else :
-                    bbb_d = np.percentile(cube.data[...,jj_min:jj_max,ii_min:ii_max].compressed(), 98)
+                try :
+                    if region is None :
+                        bbb_d = np.percentile(cube.data.compressed(), 98)
+                    else :
+                        bbb_d = np.percentile(cube.data[...,jj_min:jj_max,ii_min:ii_max].compressed(), 98)
+                except :
+                   print("can't get diff min-max for ", var)
+                   bbb_d = cube.data.max()
             #
             #ccc = (-aaa_d + bbb_d)/2
             ccc = np.max([-aaa_d, bbb_d])
         ### plot :
-        if comp_nb < 3 :
+        if SINGLE_PLOTS :
+            rect = 1
+        elif comp_nb < 3 :
             rect = loop + comp_nb + 2
         else :
             rect = (2 * loop) + 2
@@ -2514,43 +3705,71 @@ def subplot_diff(var, rundict, run_exp_list, Meth="None", depth_extract = 100, y
                 #
                 ccc = np.max([- aaa_d, bbb_d])
                 #ccc = (-aaa_d + bbb_d)/2
-            plot = subplot_proj_Orcagrid(cube[0,:,:,loci], fig = fig, iii=iii, jjj=jjj, rect=rect, Proj = False, Epipel_plot = Epipel_plot, colorbar = True, cmap = cmap1, v_min= -ccc,v_max=ccc)
+            plot = subplot_proj_Orcagrid(cube[0,:,:,loci], fig = fig, iii=iii, jjj=jjj, rect=rect, Proj = False, location=location, Epipel_plot = Epipel_plot, colorbar = True, cmap = cmap1, v_min= -ccc,v_max=ccc)
+        elif (Meth=="Long_Avg") or (Meth=="Lat_Avg") :
+            plot = subplot_proj_Orcagrid(cube[0,:,:], fig = fig, iii=iii, jjj=jjj, rect=rect, Proj = False, location=location, Epipel_plot = Epipel_plot, colorbar = True, cmap = cmap1, v_min= -ccc,v_max=ccc)
+        elif (Meth=="Atl_Pac_Lat") :
+            plot = subplot_proj_Orcagrid(cube[0,:,0:-27], fig = fig, iii=iii, jjj=jjj, rect=rect, Proj = False, location=location, Epipel_plot = Epipel_plot, Atl_Pac_section = True, colorbar = True, cmap = cmap1, v_min= -ccc,v_max=ccc)
+        elif (Meth=="Atl_Pac_hov") :
+            plot = subplot_proj_Orcagrid(cube[:,0:-27], fig = fig, iii=iii, jjj=jjj, rect=rect, Proj = False, location=location, Epipel_plot = False, Atl_Pac_section = True, colorbar = True, cmap = cmap1, v_min= -ccc,v_max=ccc)
         else:
             if region is None :
                 if proj is None :
-                    plot = subplot_proj_Orcagrid(cube[0,:,:], fig = fig, iii=iii, jjj=jjj, rect=rect, colorbar = True, cmap = cmap1, v_min= -ccc,v_max=ccc)
+                    plot = subplot_proj_Orcagrid(cube[0,:,:], fig = fig, iii=iii, jjj=jjj, rect=rect, colorbar = True, location=location,cmap = cmap1, v_min= -ccc,v_max=ccc)
                 else :
-                    plot = subplot_proj_Orcagrid(cube[0,:,:], fig = fig, iii=iii, jjj=jjj, rect=rect, colorbar = True, cmap = cmap1, v_min= -ccc,v_max=ccc, proj=proj)
+                    plot = subplot_proj_Orcagrid(cube[0,:,:], fig = fig, iii=iii, jjj=jjj, rect=rect, colorbar = True, location=location,cmap = cmap1, v_min= -ccc,v_max=ccc, proj=proj)
             else :
-                plot = subplot_proj_regional(cube[0,jj_min:jj_max,ii_min:ii_max], fig = fig, iii=iii, jjj=jjj, rect=rect, colorbar = True, cmap = cmap1, v_min= -ccc,v_max=ccc, proj=region, longit=longit.data, latit=latit.data)
-
-        plot.subtitle(comp_ttl + " minus " + ref_ttl)
+                plot = subplot_proj_regional(cube[0,jj_min:jj_max,ii_min:ii_max], fig = fig, iii=iii, jjj=jjj, rect=rect, colorbar = True, location=location,cmap = cmap1, v_min= -ccc,v_max=ccc, proj=region, longit=longit.data, latit=latit.data)
+        ##
+        if SINGLE_PLOTS :
+            if (Meth=="Transect") or (Meth=="Long_Avg") or (Meth=="Atl_Pac_Lat"):
+                plot.y_label("Depth [m]")
+                plot.x_label("Latitude North [Degree]")
+            elif (Meth=="Atl_Pac_hov") :
+                plot.y_label("Latitude North [Degree]")
+                #plot.x_label("Time (month)")
+            elif  Meth=="Lat_Avg" :
+                plot.y_label("Depth [m]")
+                plot.x_label("Longitude East [Degree]")
+            ##
+            plt.savefig(f_name +"_"+ comp_ttl + " minus " + ref_ttl, bbox_inches='tight', dpi=300)
+            if SHOW :
+                plt.show()
+        else :
+            plot.subtitle(comp_ttl + " minus " + ref_ttl)
         # ++ loop
         loop = loop + 1
     ## End loop
 
-    if Meth=="Transect":
-        if LOC == "Atl" :
-            subttle = "Atl. section -- "
-        elif LOC == "Pac" :
-            subttle = "Pacif. section -- "
+    if not SINGLE_PLOTS :
+        if Meth=="Transect":
+            if LOC == "Atl" :
+                subttle = "Atl. section -- "
+            elif LOC == "Pac" :
+                subttle = "Pacif. section -- "
+            else :
+                subttle = ""
+        elif Meth == "2D_Extract" :
+            subttle = str(depth_extract) +" m depth layer of --"
+        elif Meth == "Surface" :
+            subttle = "Surface values of --"
+        elif Meth == "Vert_Inv" :
+            subttle = "Vertically integrated --"
+        elif Meth == "Long_Avg" :
+            subttle = "Longitudinal average of --"
+        elif Meth == "Loat_Avg" :
+            subttle = "Latitudinal average of --"
         else :
             subttle = ""
-    elif Meth == "2D_Extract" :
-        subttle = str(depth_extract) +" m depth layer of --"
-    elif Meth == "Surface" :
-        subttle = "Surface values of --"
-    elif Meth == "Vert_Inv" :
-        subttle = "Vertically integrated --"
-    else :
-        subttle = ""
-    if Titre==None :
-        plt.suptitle(subttle + cube.long_name, size=16)
-    else :
-        plt.suptitle(Titre, size=16)
-    plt.rcParams.update({'font.size': 28})
-    plt.savefig(f_name)
-    plt.show()
+        if Titre==None :
+            plt.suptitle(subttle + cube.long_name, size=16)
+        else :
+            plt.suptitle(Titre, size=16)
+        #plt.rcParams.update({'font.size': 28})
+        plt.savefig(f_name)
+        if SHOW :
+            plt.show()
+
 
 
 
@@ -2758,6 +3977,590 @@ def subplot_no_diff(var, rundict, run_exp_list, Meth="None", depth_extract=100, 
 
 
 
+def subplot_comp_list(var, rundict_list, loc_list, filetype="ptrc", Meth="None", yr="None", log_scale = False, **attrs) :
+
+    print(var)
+        
+    if 'Epipel' in attrs:
+        Epipel_plot = attrs['Epipel']
+    elif var in ["ZME", "ZMI", "ZMP", "PHN", "PHD", "CHL"] :
+        Epipel_plot = True
+    else : 
+        Epipel_plot = False
+        
+    plt.rcParams.update({'font.size': 12})
+    cmap0 = plt.cm.get_cmap('viridis', 15) 
+    #cmap1 = plt.cm.get_cmap('RdBu', 15) 
+    cmap1 = plt.cm.get_cmap('RdBu_r', 15) 
+    cmap3 = plt.cm.get_cmap('RdBu', 15) 
+    cmap2 = plt.cm.get_cmap('viridis_r', 15)
+        
+    cmap0.set_bad(color='white')
+    cmap1.set_bad(color='gray')
+    cmap2.set_bad(color='gray')
+    cmap3.set_bad(color='gray')
+    
+    
+    if Meth == "None" : 
+        f_name = "Surf_plot_" + var
+    else :
+        f_name = "Surf_plot_" + var + "_" + Meth
+    if yr != "None" : 
+        f_name = f_name + "_" + yr
+        
+    comp_nb = np.size(loc_list) - 1
+    ## prep subplot display
+    if comp_nb == 0 : 
+        iii=1
+        jjj=1
+    if comp_nb == 1 : 
+        iii=1
+        jjj=2
+    elif comp_nb == 2 : 
+        iii=2
+        jjj=2
+    elif comp_nb == 3 : 
+        iii=2
+        jjj=2    
+    elif 4 <= comp_nb <= 5 : 
+        iii=3
+        jjj=2    
+    elif 6 <= comp_nb <= 8 : 
+        iii=3
+        jjj=3    
+    elif 9 <= comp_nb <= 11 : 
+        iii=4
+        jjj=3   
+    elif 12 <= comp_nb <= 15 : 
+        iii=4
+        jjj=4       
+    
+    
+    fig = plt.figure(figsize=(5*jjj,5*iii))
+    
+        # ref_file_name, interm_file_name, final_filename, ref_ttl, int_ttl, fin_ttl,
+    #runref = run_exp_list[0]
+    #ref_file_name = rundict[runlist[runref]]
+    #ref_ttl       = runlist[runref]
+    ##
+    #compref = run_exp_list[0]
+    #add_file_name = adddict[runlist[runref]]
+    #add_ttl       = runlist[runref]
+    #
+    #ax1 = fig.add_subplot(iii, jjj, 1)
+    ## no pac
+    
+    loop = 0
+    for compref in loc_list :
+        print("loc_list : ",loc_list)
+        rect = (loop)+1
+        ax1 = fig.add_subplot(iii, jjj, rect)
+        
+        for runnb in rundict_list :
+            #
+            modclass = runclass(runnb)
+            #
+            print(filetype)
+            if filetype=="ptrc" :
+                rundict        = modclass.dict_ptrc
+            elif filetype=="diad" :
+                rundict        = modclass.dict_diad
+            elif filetype=="grid" :
+                rundict        = modclass.dict_grid  
+            print(rundict)    
+            comp_file_name = rundict[runlist[compref]]
+            comp_ttl       = ttl_list[compref]
+            #
+            try: 
+            # no_speed_pref
+                if Meth == "OneD" or Meth=="surface_OneD" :
+                    cube = prep_cube(comp_file_name, var, oneD=True)
+                else :     
+                    cube = prep_cube(comp_file_name, var)
+                if Meth=="Surface" :
+                    cube = prep_cube_surf(cube,rundict_diad=modclass.dict_diad)
+                elif Meth=="surface_OneD" :
+                    cube = prep_cube_surf(cube, oneD=True,rundict_diad=modclass.dict_diad) 
+                elif Meth=="Vert_Inv":
+                    cube = prep_cube_vert_inv(cube,rundict_diad=modclass.dict_diad)
+                if 'Min' in attrs:
+                    aaa = attrs['Min']
+                else :     
+                    aaa = np.percentile(cube.data.compressed(), 5)
+                if 'Max' in attrs:
+                    bbb = attrs['Max']
+                else :      
+                    bbb = np.percentile(cube.data.compressed(), 95)
+                ### plot : 
+                if Meth=="Transect":
+                    if 'Min' in attrs:
+                        aaa = attrs['Min']
+                    else :     
+                        aaa = np.percentile(cube.data[0,:,:,262].compressed(), 5) 
+                    if 'Max' in attrs:
+                        bbb = attrs['Max']
+                    else :      
+                        bbb = np.percentile(cube.data[0,:,:,262].compressed(), 95)
+                    #        
+                    plot = subplot_proj_Orcagrid(cube[0,:,:,262], fig = fig, ax=ax1, iii=iii, jjj=jjj, rect = (loop)+1,Proj = False, Epipel_plot = Epipel_plot, colorbar = True, v_min= aaa,v_max=bbb, log_scale=log_scale)
+                elif Meth == "OneD" or Meth=="surface_OneD" : 
+                    if 'Min' in attrs:
+                        aaa = attrs['Min']
+                    else :     
+                        aaa = np.percentile(cube.data[...,0,0].compressed(), 5)
+                        #aaa2 = np.percentile(addcube.data[...,0,0].compressed(), 5)
+                        #aaa=np.min([aaa1,aaa2])
+                    if 'Max' in attrs:
+                        bbb = attrs['Max']
+                    else :      
+                        bbb = np.percentile(cube.data[...,0,0].compressed(), 95)
+                        #bbb2 = np.percentile(addcube.data[...,0,0].compressed(), 95)
+                        #bbb=np.min([bbb1,bbb2])
+                    #    
+                    plot = subplot_timeseries(cube[...,0,0], fig = fig, ax=ax1, iii=iii, jjj=jjj, rect = (loop)+1,Proj = False, Epipel_plot = Epipel_plot, colorbar = True, v_min= aaa,v_max=bbb, outfreq=modclass.outfreq, log_scale=log_scale,label=modclass.name)
+            
+                    if cube.ndim == 4 : 
+                        plot.y_label("Depth (m)")
+                    elif cube.ndim < 4 :
+                        plot.y_label(cube.units)
+                    plot.x_label("time in Year")
+                else:
+                    plot = subplot_proj_Orcagrid(cube[0,:,:], fig = fig, ax=ax1, iii=iii, jjj=jjj, rect = (loop)+1,colorbar = True, v_min= aaa,v_max=bbb, log_scale=log_scale)
+                plot.subtitle(comp_ttl)
+            except :
+                print("Could not plot ",cube.long_name," from ", comp_file_name )
+        loop = loop + 1
+    ## End loop    
+        
+   
+    plt.suptitle(cube.long_name, size=16)
+    plt.savefig(f_name)
+    plt.show()
+    
+    
+
+
+
+def subplot_comp(var, rundict, adddict, run_exp_list, Meth="None", yr="None", log_scale = False, outfreq = "1M", **attrs) :
+
+    print(var)
+    
+    # ref_file_name, interm_file_name, final_filename, ref_ttl, int_ttl, fin_ttl,
+    runref = run_exp_list[0]
+    ref_file_name = rundict[runlist[runref]]
+    ref_ttl       = runlist[runref]
+    ##
+    #compref = run_exp_list[0]
+    add_file_name = adddict[runlist[runref]]
+    add_ttl       = runlist[runref]
+    
+    if 'Epipel' in attrs:
+        Epipel_plot = attrs['Epipel']
+    elif var in ["ZME", "ZMI", "ZMP", "PHN", "PHD", "CHL"] :
+        Epipel_plot = True
+    else : 
+        Epipel_plot = False
+        
+    plt.rcParams.update({'font.size': 12})
+    cmap0 = plt.cm.get_cmap('viridis', 15) 
+    #cmap1 = plt.cm.get_cmap('RdBu', 15) 
+    cmap1 = plt.cm.get_cmap('RdBu_r', 15) 
+    cmap3 = plt.cm.get_cmap('RdBu', 15) 
+    cmap2 = plt.cm.get_cmap('viridis_r', 15)
+        
+    cmap0.set_bad(color='white')
+    cmap1.set_bad(color='gray')
+    cmap2.set_bad(color='gray')
+    cmap3.set_bad(color='gray')
+    
+    
+    if Meth == "None" : 
+        f_name = "Surf_plot_" + var
+    else :
+        f_name = "Surf_plot_" + var + "_" + Meth
+    if yr != "None" : 
+        f_name = f_name + "_" + yr
+        
+    comp_nb = np.size(run_exp_list) - 1
+    ## prep subplot display
+    if comp_nb == 1 : 
+        iii=1
+        jjj=2
+    elif comp_nb == 2 : 
+        iii=2
+        jjj=2
+    elif comp_nb == 3 : 
+        iii=2
+        jjj=2    
+    elif 4 <= comp_nb <= 5 : 
+        iii=3
+        jjj=2    
+    elif 6 <= comp_nb <= 8 : 
+        iii=3
+        jjj=3    
+    elif 9 <= comp_nb <= 11 : 
+        iii=4
+        jjj=3    
+    
+    
+    fig = plt.figure(figsize=(5*jjj,5*iii))
+    ax1 = fig.add_subplot(iii, jjj, 1)
+    ## no pac
+    if Meth=="OneD" or Meth=="surface_OneD" :
+        cube = prep_cube(ref_file_name, var, oneD=True)
+        addcube = prep_cube(add_file_name, var, oneD=True)
+    else:    
+        cube = prep_cube(ref_file_name, var)
+        addcube = prep_cube(add_file_name, var)
+    if Meth=="Surface" :
+        cube = prep_cube_surf(cube)
+        addcube = prep_cube_surf(addcube,rundict_diad=adddict_diad)
+    elif Meth=="surface_OneD" :
+        cube = prep_cube_surf(cube, oneD=True) 
+        addcube = prep_cube_surf(addcube, oneD=True,rundict_diad=adddict_diad) 
+    elif Meth=="Vert_Inv":
+        cube = prep_cube_vert_inv(cube)
+        addcube = prep_cube_vert_inv(addcube,rundict_diad=adddict_diad)
+    #aaa = cube.data.min() 
+    #bbb = cube.data.max()
+    if 'Min' in attrs:
+        aaa = attrs['Min']
+    else :     
+        aaa = np.percentile(cube.data.compressed(), 5)
+    if 'Max' in attrs:
+        bbb = attrs['Max']
+    else :      
+        bbb = np.percentile(cube.data.compressed(), 95)
+    ### plot : 
+    if Meth=="Transect":
+        if 'Min' in attrs:
+            aaa = attrs['Min']
+        else :     
+            aaa = np.percentile(cube.data[0,:,:,262].compressed(), 5) 
+        if 'Max' in attrs:
+            bbb = attrs['Max']
+        else :      
+            bbb = np.percentile(cube.data[0,:,:,262].compressed(), 95)
+        #    
+        plot = subplot_proj_Orcagrid(cube[0,:,:,262], fig = fig, iii=iii, jjj=jjj, rect = 1,Proj = False, Epipel_plot = Epipel_plot, colorbar = True, v_min= aaa,v_max=bbb, log_scale=log_scale )
+    elif Meth=="OneD" or Meth=="surface_OneD":
+        if 'Min' in attrs:
+            aaa = attrs['Min']
+        else :     
+            aaa1 = np.percentile(cube.data[...,0,0].compressed(), 5)
+            aaa2 = np.percentile(addcube.data[...,0,0].compressed(), 5)
+            aaa=np.min([aaa1,aaa2])
+        if 'Max' in attrs:
+            bbb = attrs['Max']
+        else :      
+            bbb1 = np.percentile(cube.data[...,0,0].compressed(), 95)
+            bbb2 = np.percentile(addcube.data[...,0,0].compressed(), 95)
+            bbb=np.min([bbb1,bbb2])
+        #    
+        plot = subplot_timeseries(cube[...,0,0], fig = fig, ax=ax1, iii=iii, jjj=jjj, rect = 1,Proj = False, Epipel_plot = Epipel_plot, colorbar = True, v_min= aaa,v_max=bbb, outfreq=outfreq, log_scale=log_scale,label="MEDUSA_1D" )
+        plot = subplot_timeseries(addcube[...,0,0], fig = fig, ax=ax1, iii=iii, jjj=jjj, rect = 1,Proj = False, Epipel_plot = Epipel_plot, colorbar = True, v_min= aaa,v_max=bbb, log_scale=log_scale,label="MEDUSA_3D")
+        if cube.ndim == 4 : 
+            plot.y_label("Depth (m)")
+        elif cube.ndim < 4 :
+            plot.y_label(cube.units)
+        plot.x_label("time in Year")
+    else:
+        plot = subplot_proj_Orcagrid(cube[0,:,:], fig = fig, ax=ax1, iii=iii, jjj=jjj, rect = 1,colorbar = True, v_min= aaa,v_max=bbb, log_scale=log_scale )
+    plot.subtitle(ref_ttl)
+    
+    loop = 1
+    for compref in run_exp_list[1:] : 
+        comp_file_name = rundict[runlist[compref]]
+        comp_ttl       = runlist[compref]
+        #
+        add2_file_name = adddict[runlist[compref]]
+        add2_ttl       = runlist[compref]
+        ##
+        rect = (loop)+1
+        ax1 = fig.add_subplot(iii, jjj, rect)
+        # no_speed_pref
+        if Meth == "OneD" or Meth=="surface_OneD" :
+            cube = prep_cube(comp_file_name, var, oneD=True)
+            addcube = prep_cube(add2_file_name, var, oneD=True)
+        else :     
+            cube = prep_cube(comp_file_name, var)
+            addcube = prep_cube(add2_file_name, var)
+            
+        if Meth=="Surface" :
+            cube = prep_cube_surf(cube)
+            addcube = prep_cube_surf(addcube,rundict_diad=adddict_diad)
+        elif Meth=="surface_OneD" :
+            cube = prep_cube_surf(cube, oneD=True) 
+            addcube = prep_cube_surf(addcube, oneD=True,rundict_diad=adddict_diad) 
+        elif Meth=="Vert_Inv":
+            cube = prep_cube_vert_inv(cube)
+            addcube = prep_cube_vert_inv(addcube)
+        ### plot :    
+        if Meth=="Transect":
+            plot = subplot_proj_Orcagrid(cube[0,:,:,262], fig = fig, ax=ax1, iii=iii, jjj=jjj, rect = (loop)+1,Proj = False, Epipel_plot = Epipel_plot, colorbar = True, v_min= aaa,v_max=bbb, log_scale=log_scale)
+        elif Meth == "OneD" or Meth=="surface_OneD" : 
+            plot = subplot_timeseries(cube[...,0,0], fig = fig, ax=ax1, iii=iii, jjj=jjj, rect = (loop)+1,Proj = False, Epipel_plot = Epipel_plot, colorbar = True, v_min= aaa,v_max=bbb, outfreq=outfreq, log_scale=log_scale,label="MEDUSA_1D")
+            plot = subplot_timeseries(addcube[...,0,0], fig = fig, ax=ax1, iii=iii, jjj=jjj, rect = (loop)+1,Proj = False, Epipel_plot = Epipel_plot, colorbar = True, v_min= aaa,v_max=bbb, log_scale=log_scale,label="MEDUSA_3D")
+
+            if cube.ndim == 4 : 
+                plot.y_label("Depth (m)")
+            elif cube.ndim < 4 :
+                plot.y_label(cube.units)
+            plot.x_label("time in Year")
+        else:
+            plot = subplot_proj_Orcagrid(cube[0,:,:], fig = fig, ax=ax1, iii=iii, jjj=jjj, rect = (loop)+1,colorbar = True, v_min= aaa,v_max=bbb, log_scale=log_scale)
+        plot.subtitle(comp_ttl)
+        # Diff : 
+        #cube = prep_cube_diff(ref_file_name, comp_file_name, var)
+        #if Meth=="Surface":
+        #    cube = prep_cube_surf(cube)
+        #elif Meth=="Vert_Inv":
+        #    cube = prep_cube_vert_inv(cube)
+        ### get diff min max    
+        #if loop == 1 :    
+        #    #aaa_d = cube.data.min() 
+        #    #bbb_d = cube.data.max()
+        #    #ccc = np.max([- aaa_d, bbb_d])
+        #    aaa_d = np.percentile(cube.data, 5)
+        #    bbb_d = np.percentile(cube.data, 95)
+        #    ccc = (-aaa_d + bbb_d)/2
+        ### plot : 
+        #if Meth=="Transect":
+        #    if loop == 1 :
+        #        aaa_d = np.percentile(cube.data[0,:,:,262], 5) 
+        #        bbb_d = np.percentile(cube.data[0,:,:,262], 95)
+        #        #ccc = np.max([- aaa_d, bbb_d])
+        #        ccc = (-aaa_d + bbb_d)/2
+        #    plot = subplot_proj_Orcagrid(cube[0,:,:,262], fig = fig, iii=iii, jjj=jjj, rect=(2 * loop)+2, Proj = False, Epipel_plot = Epipel_plot, colorbar = True, cmap = cmap1, v_min= -ccc,v_max=ccc)
+        #else:
+        #    plot = subplot_proj_Orcagrid(cube[0,:,:], fig = fig, iii=iii, jjj=jjj, rect=(2 * loop)+2, colorbar = True, cmap = cmap1, v_min= -ccc,v_max=ccc)
+        #plot.subtitle(comp_ttl + " minus " + ref_ttl)
+        # ++ loop
+        loop = loop + 1
+    ## End loop    
+        
+   
+    plt.suptitle(cube.long_name, size=16)
+    plt.savefig(f_name)
+    plt.show()
+    
+    
+
+
+
+
+
+def prep_cube_Atl_Pac(cube, runlist, run_nb=None,NEW=False, MONTHLY=None) :
+    '''
+    Function : prep_cube_Atl_Pac(cube)
+    - get a cube
+    - regrid mask atl
+    - regrid mask pac
+    - regrid it cube
+    - make mask-Atl --> Long avg
+    - make mask-Pac --> Long avg
+    - stick them both nicely together
+    '''
+    import os
+
+    dirr="SAVE_NC_FILE"  ## Directory with all saved regrided nc files
+    ##
+    ##first check dir exists and create it if needed:
+    if os.path.isdir(dirr) != True :
+        os.mkdir(dirr)
+
+    if MONTHLY is not None :
+        finalname = dirr + "/regridded_" + cube.var_name + "_" + runlist[run_nb] + "_ALT_PAC_m" + MONTHLY + ".nc"
+        NEW=True
+    #src_cubi = prep_cube(rundict_ptrc[runlist[0]],"DIC")
+    ATL_MASK = "all_atl"
+    PAC_MASK = "all_pac"
+    ##
+    ## Atl region :
+    ## Read the nc file if it exists :
+    fname = dirr + "/regridded_" + cube.var_name + "_" + runlist[run_nb] + "_" + ATL_MASK + "_mask"
+    if MONTHLY is not None :
+        fname = fname + "_2D.nc"
+    else :
+        fname = fname + "_3D.nc"
+    print("check if file exists : ", fname)
+    if os.path.isfile(fname) and not NEW :
+        # file exists : read it
+        print("read regridded file : ",fname)
+        reg_atl = iris.load_cube(fname)
+        #print(reg_atl)
+    else :
+        ## Mask atl :
+        atl_cubi = prep_Masked_cube(cube, ATL_MASK)
+        #  regrid :
+        reg_atl = regrid_ORCA(atl_cubi, runlist, run_nb=run_nb, MASK=ATL_MASK, NEW=NEW)
+    ##
+    # Check :
+    # print(reg_atl.data.shape)
+    ##
+    ## PAC region :
+    ## Read the nc file if it exists :
+    fname = dirr + "/regridded_" + cube.var_name + "_" + runlist[run_nb] + "_" + PAC_MASK + "_mask"
+    if MONTHLY is not None :
+        fname = fname + "_2D.nc"
+    else :
+        fname = fname + "_3D.nc"
+        #
+    print("check if file exists : ", fname)
+    if os.path.isfile(fname) and not NEW :
+        # file exists : read it
+        print("read regridded file : ",fname)
+        reg_pac = iris.load_cube(fname)
+        #print(reg_pac)
+    else :
+        ## Mask pac :
+        pac_cubi = prep_Masked_cube(cube, PAC_MASK)
+        #  regrid :
+        reg_pac = regrid_ORCA(pac_cubi, runlist, run_nb=run_nb, MASK=PAC_MASK, NEW=NEW)
+    ##
+    # Zonal average :
+    long_atl = reg_atl.collapsed('longitude', iris.analysis.MEAN)
+    long_pac = reg_pac.collapsed('longitude', iris.analysis.MEAN)
+    ##
+    #print(long_atl)
+    ## Here we create an empty Cube big enough to include both Ocean mean :
+    # create it
+    #print("area shape     : ", area.shape)
+    #xx = reg_cube.coord(axis='x')
+    #yy = long_atl.coord(axis='y')
+    yy1 = np.arange(-180, 180, 1)
+    yy = iris.coords.DimCoord(yy1, standard_name='latitude', units='degrees')
+    #print(reg_cube)
+    if MONTHLY is None :
+        ### 3D
+        tt = long_atl.coords(axis='t')[0]
+        zz = long_atl.coord(axis='z')
+        ##
+        ttdim = long_atl.shape[0]
+        zzdim = long_atl.shape[1]
+        yydim = (long_atl.shape[2] * 2 )
+        #xxdim = reg_cube.shape[2]
+        #print(ttdim, zzdim, yydim)
+        #print(yy)
+        reg_cubi = iris.cube.Cube(np.ma.zeros((ttdim, zzdim, yydim)),
+                    dim_coords_and_dims=[(tt, 0),
+                                         (zz, 1),
+                                         (yy, 2)])
+        ## Fill the cube
+        ## Atl first and Pacific after
+        reg_cubi.data[:,:,0:180] = np.flip(long_atl.data,2)
+        reg_cubi.data[:,:,180:] = long_pac.data
+    else :
+        ### 2D
+        ### 3D
+        tt = long_atl.coords(axis='t')[0]
+        #zz = long_atl.coord(axis='z')
+        ##
+        ttdim = long_atl.shape[0]
+        #zzdim = long_atl.shape[1]
+        yydim = (long_atl.shape[1] * 2 )
+        #xxdim = reg_cube.shape[2]
+        #print(ttdim, zzdim, yydim)
+        #print(yy)
+        reg_cubi = iris.cube.Cube(np.ma.zeros((ttdim, yydim)),
+                    dim_coords_and_dims=[(tt, 0),
+                                         #(zz, 1),
+                                         (yy, 1)])
+        ## Fill the cube
+        ## Atl first and Pacific after
+        reg_cubi.data[:,0:180] = np.flip(long_atl.data,1)
+        reg_cubi.data[:,180:] = long_pac.data
+
+    reg_cubi.name = cube.name
+    reg_cubi.long_name = cube.long_name
+    reg_cubi.units = cube.units
+    print(reg_cubi.shape)
+
+    if MONTHLY is not None :
+        print("saving file : ",finalname)
+        iris.save(reg_cubi, finalname)
+    return reg_cubi
+
+
+
+
+def prep_cube_Atl_Pac_hov_from_monthly(file_name, var, runlist, run_nb=None, REF_COMP=None, Obs=False, MASK_ZERO=True ,NEW_regrid=False) :
+    ##
+    import os
+    ##
+    '''
+    prepare an atl-pac-averaged surface section of a whole year (month by month)
+    nc file, ready to be plotted.
+    the file is saved and ready to use to avoid having to redo the long regridding/averaging work.
+
+    call like :
+    cube = prep_cube_Atl_Pac_hov_from_monthly(file_name,
+                                              var,
+                                              run_nb=None,
+                                              REF_COMP=None,
+                                              Obs=False,
+                                              MASK_ZERO=True ,
+                                              NEW_regrid=False)
+    '''
+    ##
+    dirr="SAVE_NC_FILE"  ## Directory with all saved regrided nc files
+    ##
+    ##first check dir exists and create it if needed:
+    if os.path.isdir(dirr) != True :
+        os.mkdir(dirr)
+    ##
+    finalname = dirr + "/Hovm_" + var + "_" + runlist[run_nb] + "_ALT_PAC_.nc"
+    if os.path.isfile(finalname) :
+        # file exists : read it
+        print("read ready Hovmoell file : ",finalname)
+        cube = iris.load_cube(finalname)
+    else :
+        ## assume monthly file name ends with *_T_m?.nc
+        print(" reading monthly files for hovmoeller plot : ")
+    #    print(file_name[:-4])
+        for mm in ['1', '2', '3', '4', '5', '6', '7', '8', '9', '10', '11', '12']:
+            ## check for the if monthly section already exists -
+            fname = dirr + "/regridded_" + var + "_" + runlist[run_nb] + "_ALT_PAC_m" + mm + ".nc"
+            if os.path.isfile(fname) :
+                # file exists : read it
+                print("read monthly file : ",fname)
+                cube1m = iris.load_cube(fname)
+            else :
+                # file doesn't exist - do the regrid/avg work.
+                base=file_name[:-4]+mm+".nc"
+                print(base)
+                cube1m = prep_cube(base, var, REF_COMP=REF_COMP, Obs=Obs,MASK_ZERO=MASK_ZERO )
+                ## extract surface:
+                try :
+                    cube1m = prep_cube_surf(cube1m)
+                    if cube1m is None :
+                        print("cube ref surface gives None")
+                except :
+                    print("already 2D -- ", cube1m.data.shape ," no need to extract ")
+                ##
+                ## Does mask, regrid and stick atl pand PAC
+                ## might not work here because of surface only fields... let see how that goes but easy to fix
+                #try :
+                cube1m = prep_cube_Atl_Pac(cube1m, runlist, run_nb=run_nb, NEW=NEW_regrid, MONTHLY=mm)
+                if cube1m is None :
+                    print("cube ref Atl_Pac_Lat gives None")
+                #except :
+                #    print("Atl-Pac average not working... -- ", cube1m.data.shape )
+            if mm == '1' :
+                cube_list = iris.cube.CubeList([cube1m])
+            else :
+                cube_list.append(cube1m)
+
+        cube = cube_list.concatenate()[0]
+        iris.save(cube,finalname)
+        ##
+    print(cube)
+    #
+    return cube
+
+
+
+
 
 
 #def prep_cube_transect(FDDT) :
@@ -2798,11 +4601,10 @@ def prep_cube_extract_depth(fPOC, depth, oneD=False):
         kk = 39
     elif depth == 1000 :
         kk = 46
-    #
+    #   
     ## extract depth
-    try :
-        surf_slice = cube.extract(iris.Constraint(depth=kk) )
-    except :
+    surf_slice = cube.extract(iris.Constraint(depth=kk) ) 
+    if surf_slice is None :     
         surf_slice = cube.extract(iris.Constraint(coord_values={'Vertical T levels':lambda cell: cell == kk}))
     #
     return surf_slice
@@ -2818,26 +4620,57 @@ def prep_cube_vert_inv(FDDT, oneD=False) :
 
     return cube
 
-def prep_cube_surf(FDDT, oneD=False,) :
-    #print(FDDT)
+
+def prep_Masked_cube(cube,MASK,maskfile="/noc/users/jpp1m13/WORKING/UKESM/MESH/eORCA1/NEMO42/eORCA100_masks.nc") :
+    ##
+    #copy cube in to avoid masking several times :
+    FDDT = cube.copy()
+    ##read the mask : (mask is 2D x:y only)
+    cmask = prep_cube(maskfile,MASK)
+    #will mask the cube now : 
     if FDDT.data.ndim == 4 :
-        try :
-            cube = FDDT.extract(iris.Constraint(depth=0) )
-        except :
+        print("Masking 4D -- ",FDDT.data.shape," -- Mask is ", MASK)
+        ttdim = FDDT.shape[0]
+        zzdim = FDDT.shape[1]
+        for tt in np.arange(ttdim):
+            for zz in np.arange(zzdim):
+                bibi = np.ma.masked_where(cmask.data !=0, FDDT[tt,zz,:,:].data)
+                FDDT.data[tt,zz,:,:] = bibi
+    elif FDDT.data.ndim == 3 :
+        print("Masking 3D -- ",FDDT.data.shape," -- Mask is ", MASK)
+        ## don't care if first dim is tt or zz : 
+        ttdim = FDDT.shape[0]
+        for tt in np.arange(ttdim):
+            bibi = np.ma.masked_where(cmask.data != 0, FDDT[tt,:,:].data)
+            FDDT.data[tt,:,:] = bibi
+    elif FDDT.data.ndim == 2 :
+        # already 2D
+        print("Masking 2D -- ",FDDT.data.shape," -- Mask is ", MASK)
+        bibi = np.ma.masked_where(cmask.data !=0, FDDT.data)
+        FDDT.data = bibi
+    else : 
+        print("data shape not understood : ", FDDT.data.shape)
+    return FDDT
+
+
+def prep_cube_surf(FDDT, oneD=False,) :
+    ##
+    if FDDT.data.ndim == 4 :
+        cube = FDDT.extract(iris.Constraint(depth=0) ) 
+        if cube is None :     
             cube = FDDT.extract(iris.Constraint(coord_values={'Vertical T levels':lambda cell: cell == 0}))
         return cube
     elif FDDT.data.ndim == 3 :
         ## check the first dim is depth (more than one layer)
         ## if not, no need to extract
-        if FDDT.data.shape[0] == 1 :
+        if FDDT.data.shape[0] <= 12 :
             print("already 2D -- ",FDDT.data.shape," -- no need to extract --")
             return FDDT
         else :
             # real 3D
-            try :
-                cube = FDDT.extract(iris.Constraint(depth=0) )
-            except :
-                cube = FDDT.extract(iris.Constraint(coord_values={'Vertical T levels':lambda cell: cell == 0}))
+            cube = FDDT.extract(iris.Constraint(depth=0) ) 
+            if cube is None :     
+                cube = FDDT.extract(iris.Constraint(coord_values={'Vertical T levels':lambda cell: cell == 0}))   
             return cube
     elif FDDT.data.ndim == 2 :
         # already 2D
@@ -2851,8 +4684,8 @@ def prep_cube_surf(FDDT, oneD=False,) :
 
 
 
-def prep_cube_Obs(FDDT) :
-    temp = prep_cube(rundict_diad[runlist[1]], "FASTN")
+def prep_cube_Obs(FDDT, diad_file) :
+    temp = prep_cube(diad_file, "FASTN")
     #print(temp)
     #FDDT = prep_cube(filename, var)
     #print(FDDT)
@@ -2896,7 +4729,41 @@ def prep_cube_Obs(FDDT) :
 
 
 
-def prep_cube(file_name, var, YYear=13, REF_COMP=None, Obs=False, oneD=False) :
+def prep_cube(file_name, var, YYear=13, REF_COMP=None, Obs=False, oneD=False, MASK_ZERO=False) :
+    '''
+    prep_cube(file_name, var, YYear=13, REF_COMP=None, Obs=False, oneD=False, MASK_ZERO=False)
+    
+    Function that read a variable from a nc or mat file, and return an iris cube.
+    can be called with only cube = prep_cube("filename","var"), but has also some extra options and build up variables
+    the function is called with : 
+    -- Filename : the file where to read the variable from
+    -- var      : the variable to read. can ve a specific variable from the file, or a combination of MEDUSA's variables.
+                  of which : 
+                  "PP"        - total primary prod
+                  "ML_PP"     - Mixed layer PP
+                  "SUB_LM_PP" - sub Mixed Layer PP
+                  "ZOO_growth"- with PAC included if PAC is there
+                  "PHYTO"     - phytoplankton population
+                  "ZOO"       - zooplankton population
+                  "PLKT"      - PHYTO + ZOO 
+                  "CHL"       - PHYTO + ZOO 
+                  "DETFLUX_100m "
+                  "DETFLUX_200m "
+                  "DETFLUX_500m "
+                  "DETFLUX_1000m "
+                  ....
+                  ....
+                  
+    -- YYear   : probably old unused option
+    -- REF_COMP: A reference filename use to compare the variable with.
+                 The resulting cube is the diff of the variable from (file_name - REF_COMP )
+                 Do not fill if not needed 
+    -- Obs     : Set to True if the file to read is an observation : 
+                 in an automated script, like subplot_diff, where one might want to only use MEDUSA's var_name, 
+                 the obs known variable are automatically used instead, and alternative file_name is looked for if needed.
+    -- oneD    : to set as True if the file is One dimention (Z dim or T-Z dim only)
+    -- MASK_ZERO: set to True if you want to mask the 0.0 values automatically.
+    '''
     print("reading", var," in ",file_name, "REF_COMP :", REF_COMP )
     if file_name[-3:] ==".nc" :
         #print("read nc file", file_name)
@@ -2909,21 +4776,40 @@ def prep_cube(file_name, var, YYear=13, REF_COMP=None, Obs=False, oneD=False) :
                 print("read Obs nc file", rundict_diad[runlist[0]], var)
                 cubi = read_cube(rundict_diad[runlist[0]], var)
             ## Make the cube comparable with the NEMO files
-            cube = prep_cube_Obs(cubi)
+            cube = prep_cube_Obs(cubi, REF_COMP)
         else :
             if var == "PP" :
-                PRN = prep_cube(file_name, "PRN", oneD=oneD)
-                PRD = prep_cube(file_name, "PRD", oneD=oneD)
+                PRN = prep_cube(file_name, "PRN", oneD=oneD, MASK_ZERO=MASK_ZERO)
+                PRD = prep_cube(file_name, "PRD", oneD=oneD, MASK_ZERO=MASK_ZERO)
                 cube = PRN.copy()
                 cube.data = PRN.data + PRD.data
                 cube.data = cube.data * 6.625 * 12.011 * 1e-3
+                cube.var_name = "PP"
                 cube.long_name = "Total Primary production"
                 cube.units = "g-C/m2/d"
+            elif var == "ML_PP" :
+                PRN = prep_cube(file_name, "ML_PRN", oneD=oneD, MASK_ZERO=MASK_ZERO)
+                PRD = prep_cube(file_name, "ML_PRD", oneD=oneD, MASK_ZERO=MASK_ZERO)
+                cube = PRN.copy()
+                cube.data = PRN.data + PRD.data
+                cube.data = cube.data * 6.625 * 12.011 * 1e-3
+                cube.var_name = "ML_PP"
+                cube.long_name = "Mixed Layer Primary production"
+                cube.units = "g-C/m2/d"
+            elif var == "SUB_ML_PP" :
+                PP    = prep_cube(file_name, "PP"   , oneD=oneD, MASK_ZERO=MASK_ZERO)
+                ML_PP = prep_cube(file_name, "ML_PP", oneD=oneD, MASK_ZERO=MASK_ZERO)
+                cube  = PP.copy()
+                cube.data = PP.data - ML_PP.data
+                #cube.data = cube.data * 6.625 * 12.011 * 1e-3
+                cube.var_name = "SUB_ML_PP"
+                cube.long_name = "Sub-Surface Primary production"
+                cube.units = "g-C/m2/d"
             elif var == "ZOO_growth" :
-                ZIG = prep_cube(file_name, "ZI_GROW", oneD=oneD)
-                ZEG = prep_cube(file_name, "ZE_GROW", oneD=oneD)
+                ZIG = prep_cube(file_name, "ZI_GROW", oneD=oneD, MASK_ZERO=MASK_ZERO)
+                ZEG = prep_cube(file_name, "ZE_GROW", oneD=oneD, MASK_ZERO=MASK_ZERO)
                 try :
-                    ZPG = prep_cube(file_name, "ZP_GROW", oneD=oneD)
+                    ZPG = prep_cube(file_name, "ZP_GROW", oneD=oneD, MASK_ZERO=MASK_ZERO)
                 except :
                     ZPG = ZIG.copy()
                     ZPG.data = ZPG.data * 0.0
@@ -2931,26 +4817,26 @@ def prep_cube(file_name, var, YYear=13, REF_COMP=None, Obs=False, oneD=False) :
                 cube.data = ZIG.data + ZEG.data + ZPG.data
                 cube.long_name = "Total Zooplankton Growth"
             elif var == "PHYTO" :
-                PRN = prep_cube(file_name, "PHN_E3T", oneD=oneD)
-                PRD = prep_cube(file_name, "PHD_E3T", oneD=oneD)
+                PRN = prep_cube(file_name, "PHN_E3T", oneD=oneD, MASK_ZERO=MASK_ZERO)
+                PRD = prep_cube(file_name, "PHD_E3T", oneD=oneD, MASK_ZERO=MASK_ZERO)
                 cube = PRN.copy()
                 cube.data = PRN.data + PRD.data
                 cube.data = cube.data * 6.625 * 12.011 * 1e-3
                 cube.long_name = "Integrated Phyto biomass"
                 cube.units = "g-C/m2"
             elif var == "ZOO" :
-                PRN = prep_cube(file_name, "ZMI_E3T", oneD=oneD)
-                PRD = prep_cube(file_name, "ZME_E3T", oneD=oneD)
+                PRN = prep_cube(file_name, "ZMI_E3T", oneD=oneD, MASK_ZERO=MASK_ZERO)
+                PRD = prep_cube(file_name, "ZME_E3T", oneD=oneD, MASK_ZERO=MASK_ZERO)
                 cube = PRN.copy()
                 cube.data = PRN.data + PRD.data
                 cube.data = cube.data * 5.625 * 12.011 * 1e-3
                 cube.long_name = "Integrated Zoo biomass"
                 cube.units = "g-C/m2"
             elif var == "PLKT" :
-                PRN = prep_cube(file_name, "PHN_E3T", oneD=oneD)
-                PRD = prep_cube(file_name, "PHD_E3T", oneD=oneD)
-                ZIG = prep_cube(file_name, "ZMI_E3T", oneD=oneD)
-                ZEG = prep_cube(file_name, "ZME_E3T", oneD=oneD)
+                PRN = prep_cube(file_name, "PHN_E3T", oneD=oneD, MASK_ZERO=MASK_ZERO)
+                PRD = prep_cube(file_name, "PHD_E3T", oneD=oneD, MASK_ZERO=MASK_ZERO)
+                ZIG = prep_cube(file_name, "ZMI_E3T", oneD=oneD, MASK_ZERO=MASK_ZERO)
+                ZEG = prep_cube(file_name, "ZME_E3T", oneD=oneD, MASK_ZERO=MASK_ZERO)
                 PRN.data = PRN.data * 6.625 * 12.011 * 1e-3
                 PRD.data = PRD.data * 6.625 * 12.011 * 1e-3
                 ZIG.data = ZIG.data * 5.625 * 12.011 * 1e-3
@@ -2960,10 +4846,11 @@ def prep_cube(file_name, var, YYear=13, REF_COMP=None, Obs=False, oneD=False) :
                 cube.long_name = "Integrated plankton biomass"
                 cube.units = "g-C/m2"
             elif var == "CHL" :
-                PRN = prep_cube(file_name, "CHN", oneD=oneD)
-                PRD = prep_cube(file_name, "CHD", oneD=oneD)
+                PRN = prep_cube(file_name, "CHN", oneD=oneD, MASK_ZERO=MASK_ZERO)
+                PRD = prep_cube(file_name, "CHD", oneD=oneD, MASK_ZERO=MASK_ZERO)
                 cube = PRN.copy()
                 cube.data = PRN.data + PRD.data
+                cube.var_name = "CHL" 
                 cube.long_name = "Total Chlorophyll"
                 cube.units = "mg-C/m3"
             elif var == "DETFLUX_100m":
@@ -2973,31 +4860,31 @@ def prep_cube(file_name, var, YYear=13, REF_COMP=None, Obs=False, oneD=False) :
                 # DETFLUX3 (tot N flux)
                 # FDS_NIT3; FD1_NIT3; FDS_CAR3; FD1_CAR3 ; 3D N or C slow or fast
                 ### ==> DETFLUX3
-                DETF3 = prep_cube(file_name, "DETFLUX3", oneD=oneD) ## 3D
+                DETF3 = prep_cube(file_name, "DETFLUX3", oneD=oneD, MASK_ZERO=MASK_ZERO) ## 3D
                 ### Extract 2D from specific layer :
                 cube = prep_cube_extract_depth(DETF3, 100)
                 cube.long_name = "sinking N flux at 100m depth"
             elif var == "DETFLUX_200m":
                 ### ==> DETFLUX3
-                DETF3 = prep_cube(file_name, "DETFLUX3", oneD=oneD) ## 3D
+                DETF3 = prep_cube(file_name, "DETFLUX3", oneD=oneD, MASK_ZERO=MASK_ZERO) ## 3D
                 ### Extract 2D from specific layer :
                 cube = prep_cube_extract_depth(DETF3, 200)
                 cube.long_name = "sinking N flux at 200m depth"
             elif var == "DETFLUX_500m":
                 ### ==> DETFLUX3
-                DETF3 = prep_cube(file_name, "DETFLUX3", oneD=oneD) ## 3D
+                DETF3 = prep_cube(file_name, "DETFLUX3", oneD=oneD, MASK_ZERO=MASK_ZERO) ## 3D
                 ### Extract 2D from specific layer :
                 cube = prep_cube_extract_depth(DETF3, 500)
                 cube.long_name = "sinking N flux at 500m depth"
             elif var == "DETFLUX_1000m":
                 ### ==> DETFLUX3
-                DETF3 = prep_cube(file_name, "DETFLUX3", oneD=oneD) ## 3D
+                DETF3 = prep_cube(file_name, "DETFLUX3", oneD=oneD, MASK_ZERO=MASK_ZERO) ## 3D
                 ### Extract 2D from specific layer :
                 cube = prep_cube_extract_depth(DETF3, 1000)
                 cube.long_name = "sinking N flux at 1000m depth"
             elif var == "TRANSF_EFF" :
                 ## flux at 100m :
-                DET100 = prep_cube(file_name, "DETFLUX_100m", oneD=oneD)
+                DET100 = prep_cube(file_name, "DETFLUX_100m", oneD=oneD, MASK_ZERO=MASK_ZERO)
                 ## flux at 1000m :
                 DET1000 = prep_cube(file_name, "DETFLUX_1000m", oneD=oneD)
                 ## Transfer eff = flux 1000 / flux 100
@@ -3018,50 +4905,50 @@ def prep_cube(file_name, var, YYear=13, REF_COMP=None, Obs=False, oneD=False) :
             #! total tracer, and delta
             #zinvt      = zsum3d + zsum2d
             #### for each of the pool containinh C :
-                CC1  = prep_cube(file_name, "PHN_E3T", REF_COMP=REF_COMP, oneD=oneD)
+                CC1  = prep_cube(file_name, "PHN_E3T", REF_COMP=REF_COMP, oneD=oneD, MASK_ZERO=MASK_ZERO)
                 CC1a = prep_cube_vert_inv(CC1)
                 #
-                CC2  = prep_cube(file_name, "PHD_E3T", REF_COMP=REF_COMP, oneD=oneD)
+                CC2  = prep_cube(file_name, "PHD_E3T", REF_COMP=REF_COMP, oneD=oneD, MASK_ZERO=MASK_ZERO)
                 CC2a = prep_cube_vert_inv(CC2)
                 #
-                CC3  = prep_cube(file_name, "ZMI_E3T", REF_COMP=REF_COMP, oneD=oneD)
+                CC3  = prep_cube(file_name, "ZMI_E3T", REF_COMP=REF_COMP, oneD=oneD, MASK_ZERO=MASK_ZERO)
                 CC3a = prep_cube_vert_inv(CC3)
                 #
-                CC4  = prep_cube(file_name, "ZME_E3T", REF_COMP=REF_COMP, oneD=oneD)
+                CC4  = prep_cube(file_name, "ZME_E3T", REF_COMP=REF_COMP, oneD=oneD, MASK_ZERO=MASK_ZERO)
                 CC4a = prep_cube_vert_inv(CC4)
                 #
-                CC5  = prep_cube(file_name, "DTC_E3T", REF_COMP=REF_COMP, oneD=oneD)
+                CC5  = prep_cube(file_name, "DTC_E3T", REF_COMP=REF_COMP, oneD=oneD, MASK_ZERO=MASK_ZERO)
                 CC5a = prep_cube_vert_inv(CC5)
                 #
-                CC6  = prep_cube(file_name, "DIC_E3T", REF_COMP=REF_COMP, oneD=oneD)
+                CC6  = prep_cube(file_name, "DIC_E3T", REF_COMP=REF_COMP, oneD=oneD, MASK_ZERO=MASK_ZERO)
                 CC6a = prep_cube_vert_inv(CC6)
                 ## dont forget benthic C on diad file :
-                file_d      = file_name[:-9] + "diad" +  file_name[-5:]
+                file_d      = diad_replace(file_name)
                 if REF_COMP is None :
                     file_d_comp = None
                 else :
-                    file_d_comp = REF_COMP[:-9]  + "diad" +   REF_COMP[-5:]
-                CC7  = prep_cube(file_d, "BEN_C" , REF_COMP=file_d_comp, oneD=oneD)
-                CC8  = prep_cube(file_d, "BEN_CA", REF_COMP=file_d_comp, oneD=oneD)
+                    file_d_comp = diad_replace(REF_COMP)
+                CC7  = prep_cube(file_d, "BEN_C" , REF_COMP=file_d_comp, oneD=oneD, MASK_ZERO=MASK_ZERO)
+                CC8  = prep_cube(file_d, "BEN_CA", REF_COMP=file_d_comp, oneD=oneD, MASK_ZERO=MASK_ZERO)
                 #
                 cube = CC7.copy()
                 cube.data = 6.625 * ( CC1a.data + CC2a.data + CC3a.data + CC4a.data) + CC5a.data + CC6a.data + CC7.data + CC8.data
                 cube.long_name = "Total carbon"
                 cube.units = "mmol-C/m2"
             elif var == "TOT_C_org" :
-                CC1  = prep_cube(file_name, "PHN_E3T", REF_COMP=REF_COMP, oneD=oneD)
+                CC1  = prep_cube(file_name, "PHN_E3T", REF_COMP=REF_COMP, oneD=oneD, MASK_ZERO=MASK_ZERO)
                 CC1a = prep_cube_vert_inv(CC1)
                 #
-                CC2  = prep_cube(file_name, "PHD_E3T", REF_COMP=REF_COMP, oneD=oneD)
+                CC2  = prep_cube(file_name, "PHD_E3T", REF_COMP=REF_COMP, oneD=oneD, MASK_ZERO=MASK_ZERO)
                 CC2a = prep_cube_vert_inv(CC2)
                 #
-                CC3  = prep_cube(file_name, "ZMI_E3T", REF_COMP=REF_COMP, oneD=oneD)
+                CC3  = prep_cube(file_name, "ZMI_E3T", REF_COMP=REF_COMP, oneD=oneD, MASK_ZERO=MASK_ZERO)
                 CC3a = prep_cube_vert_inv(CC3)
                 #
-                CC4  = prep_cube(file_name, "ZME_E3T", REF_COMP=REF_COMP, oneD=oneD)
+                CC4  = prep_cube(file_name, "ZME_E3T", REF_COMP=REF_COMP, oneD=oneD, MASK_ZERO=MASK_ZERO)
                 CC4a = prep_cube_vert_inv(CC4)
                 #
-                CC5  = prep_cube(file_name, "DTC_E3T", REF_COMP=REF_COMP, oneD=oneD)
+                CC5  = prep_cube(file_name, "DTC_E3T", REF_COMP=REF_COMP, oneD=oneD, MASK_ZERO=MASK_ZERO)
                 CC5a = prep_cube_vert_inv(CC5)
                 #
                 cube = CC1a.copy()
@@ -3071,8 +4958,8 @@ def prep_cube(file_name, var, YYear=13, REF_COMP=None, Obs=False, oneD=False) :
             elif var == "TOT_C_ben" :
                 ## dont forget benthic C on diad file :
                 #file_d = file_name[:-9]+"diad"+file_name[-5:]
-                CC7  = prep_cube(file_name, "BEN_C", REF_COMP=REF_COMP, oneD=oneD)
-                CC8  = prep_cube(file_name, "BEN_CA", REF_COMP=REF_COMP, oneD=oneD)
+                CC7  = prep_cube(file_name, "BEN_C", REF_COMP=REF_COMP, oneD=oneD, MASK_ZERO=MASK_ZERO)
+                CC8  = prep_cube(file_name, "BEN_CA", REF_COMP=REF_COMP, oneD=oneD, MASK_ZERO=MASK_ZERO)
                 #
                 cube = CC7.copy()
                 cube.data = CC7.data + CC8.data
@@ -3085,22 +4972,22 @@ def prep_cube(file_name, var, YYear=13, REF_COMP=None, Obs=False, oneD=False) :
             #  zsum2d     = glob_sum( 'trcrrst', z2d(:,:) * zarea(:,:) )
             #  ! total tracer, and delta
             #  zinvt      = zsum3d + zsum2d
-                CC1  = prep_cube(file_name, "ALK_E3T", REF_COMP=REF_COMP, oneD=oneD)
+                CC1  = prep_cube(file_name, "ALK_E3T", REF_COMP=REF_COMP, oneD=oneD, MASK_ZERO=MASK_ZERO)
                 CC1a = prep_cube_vert_inv(CC1)
                 #
-                file_d      = file_name[:-9] + "diad" +  file_name[-5:]
+                file_d      = diad_replace(file_name) ## same replace
                 if REF_COMP is None :
                     file_d_comp = None
                 else :
-                    file_d_comp = REF_COMP[:-9]  + "diad" +   REF_COMP[-5:]
-                CC7  = prep_cube(file_d, "BEN_CA", REF_COMP=file_d_comp, oneD=oneD)
+                    file_d_comp = diad_replace(REF_COMP) ## same replace
+                CC7  = prep_cube(file_d, "BEN_CA", REF_COMP=file_d_comp, oneD=oneD, MASK_ZERO=MASK_ZERO)
                 #
                 cube = CC7.copy()
                 cube.data = CC1a.data + 2 * CC7.data
                 cube.long_name = "Total Alkalinity"
                 cube.units = "mmol/m2"
             elif var == "TOT_A_ben" :
-                CC7  = prep_cube(file_name, "BEN_CA", REF_COMP=REF_COMP, oneD=oneD)
+                CC7  = prep_cube(file_name, "BEN_CA", REF_COMP=REF_COMP, oneD=oneD, MASK_ZERO=MASK_ZERO)
                 #
                 cube = CC7.copy()
                 cube.data = 2 * CC7.data
@@ -3108,11 +4995,11 @@ def prep_cube(file_name, var, YYear=13, REF_COMP=None, Obs=False, oneD=False) :
                 cube.units = "mmol/m2"
             elif var == "RATIO_C_A" :
                 ## Tot
-                CC1a  = prep_cube(file_name, "TOT_C", oneD=oneD)
-                CC1b  = prep_cube(REF_COMP , "TOT_C", oneD=oneD)
+                CC1a  = prep_cube(file_name, "TOT_C", oneD=oneD, MASK_ZERO=MASK_ZERO)
+                CC1b  = prep_cube(REF_COMP , "TOT_C", oneD=oneD, MASK_ZERO=MASK_ZERO)
                 #
-                CC2a  = prep_cube(file_name, "TOT_A", oneD=oneD)
-                CC2b  = prep_cube(REF_COMP , "TOT_A", oneD=oneD)
+                CC2a  = prep_cube(file_name, "TOT_A", oneD=oneD, MASK_ZERO=MASK_ZERO)
+                CC2b  = prep_cube(REF_COMP , "TOT_A", oneD=oneD, MASK_ZERO=MASK_ZERO)
                 #
                 ## diff TOT_C :
                 CC1 = CC1a.copy()
@@ -3136,18 +5023,36 @@ def prep_cube(file_name, var, YYear=13, REF_COMP=None, Obs=False, oneD=False) :
             #  zsum2d     = glob_sum( 'trcrrst', z2d(:,:) * zarea(:,:) )
             #  ! total tracer, and delta
             #  zinvt      = zsum3d + zsum2d
-                CC1  = prep_cube(file_name, "ATM_PCO2", oneD=oneD)
-                CC2  = prep_cube(file_name, "OCN_PCO2", oneD=oneD)
+                CC1  = prep_cube(file_name, "ATM_PCO2", oneD=oneD, MASK_ZERO=MASK_ZERO)
+                CC2  = prep_cube(file_name, "OCN_PCO2", oneD=oneD, MASK_ZERO=MASK_ZERO)
                 #
                 cube = CC2.copy()
                 cube.data = CC2.data - CC1.data
                 cube.long_name = "Ocn-Atm PCO2 difference"
                 cube.units = "uatm"
+            elif (var == "nav_lon") or (var == "longitude") :
+                daata = read_cube("/noc/users/jpp1m13/WORKING/UKESM/MESH/eORCA1/NEMO42/mesh_mask.nc", "glamt")
+                temp  = prep_cube(rundict_diad[runlist[1]], "FASTN")
+                cube = temp.copy()
+                cube.data[0,...] = daata.data[0,...]
+                print("cube shape = ", cube.data.shape)
+                cube.name = daata.name
+                cube.long_name = "longitude"
+                cube.units = "degree"
+            elif (var == "nav_lat") or (var == "latitude") :
+                daata = read_cube("/noc/users/jpp1m13/WORKING/UKESM/MESH/eORCA1/NEMO42/mesh_mask.nc", "gphit")
+                temp  = prep_cube(rundict_diad[runlist[1]], "FASTN")
+                cube = temp.copy()
+                cube.data[0,...] = daata.data[0,...]
+                print("cube shape = ", cube.data.shape)
+                cube.name = daata.name
+                cube.long_name = "latitude"
+                cube.units = "degree"
             else :
-                print(" REF_COMP :", REF_COMP)
+                #print(" REF_COMP :", REF_COMP)
                 if REF_COMP is None :
-                    print(" REF_COMP is none loop")
-                    cube = read_cube(file_name, var)
+                    #print(" REF_COMP is none loop")
+                    cube = read_cube(file_name, var, MASK_ZERO=MASK_ZERO)
                     ## fill the halo :
                     if oneD == False :
                         cube.data[...,-1] = cube.data[...,1]
@@ -3163,7 +5068,7 @@ def prep_cube(file_name, var, YYear=13, REF_COMP=None, Obs=False, oneD=False) :
                         #plot_proj_Orcagrid(cube[0,:,:])
                 else :
                     print(" REF_COMP filled loop")
-                    cube = prep_cube_diff(REF_COMP, file_name, var, oneD=oneD)
+                    cube = prep_cube_diff(REF_COMP, file_name, var, oneD=oneD, MASK_ZERO=MASK_ZERO)
     #else :
     elif file_name[-3:] == "mat" :
         print("read mat file", file_name)
@@ -3283,16 +5188,16 @@ def prep_cube(file_name, var, YYear=13, REF_COMP=None, Obs=False, oneD=False) :
             cube.data = cube.data * -1 * 1e15 * 1e-3 / 12.011 / 360
 
         #
-    cube.data = np.ma.masked_invalid(cube.data )
+    #cube.data = np.ma.masked_invalid(cube.data )
     #
     ###############
-    if REF_COMP is not None :
+    if REF_COMP is not None and not Obs :
         cube.long_name = "delta " + cube.long_name
     ## Correct units if needed -
-    if var == "SILic" :
-        cube.units = "mmol-Si/m3"
-    if var == "ALKalin" :
-        cube.units = "meq/m3"
+    #if var == "SILic" : 
+    #    cube.units = "mmol-Si/m3"
+    #if var == "ALKalin" :
+    #    cube.units = "meq/m3"
 
     return cube
 
@@ -3314,18 +5219,72 @@ def prep_cube_diff(file_name_ref, file_name, var, oneD=False) :
 
 
 
- def read_cube(nc_P, var, mask = True, hard_mask = True) :
-        v_TT = iris.Constraint(cube_func=(lambda c: c.var_name == var))
-        TT = iris.load(nc_P, constraints=v_TT)[0]
-        if mask == True :
-            SS = np.ma.array(TT.data, mask= np.absolute(TT.data) >1e17, hard_mask=hard_mask)
-            #
-            cube = TT.copy(SS)
-        else :
-            cube = TT.copy()
-        return cube
+def read_cube(nc_P, var, mask = True, hard_mask = True, MASK_ZERO=False) :
+    v_TT = iris.Constraint(cube_func=(lambda c: c.var_name == var))
+    TT = iris.load(nc_P, constraints=v_TT)[0]
+    if mask == True :
+        SS = np.ma.array(TT.data, mask= np.absolute(TT.data) >1e17, hard_mask=hard_mask)
+        if MASK_ZERO : 
+            SS = np.ma.masked_where(TT.data==0, SS)
+        #
+        cube = TT.copy(SS)
+    else :
+        cube = TT.copy()
+    return cube
 
 
+
+
+
+def plot_timeseries_from_file(var, runlist, run_exp_list, region_list = [None, "NorthOrtho"], YY=None, SHOW=False) :
+    '''
+    YY is number of year to plot 
+    '''
+    from os.path import exists
+    ##
+    fig = plt.figure(figsize=(5,5))
+    ax = fig.add_subplot(1, 1, 1)
+    ##
+    reg_names="reg"
+    get_name = True
+    for exp in run_exp_list :
+        ###
+        ##1 - read saved time_serie if exist
+        for region in region_list :
+            if region is None :
+                tm_name=var+"_"+runlist[exp]+"_time_serie"
+                label = runlist[exp]
+                if get_name :
+                    reg_names = reg_names + "_global"
+            elif region == "NorthOrtho" :
+                tm_name=var+"_"+runlist[exp]+"_"+region+"_time_serie"
+                label = runlist[exp] + " Arctic"
+                if get_name :
+                    reg_names = reg_names + "_Arctic"
+            else :
+                tm_name=var+"_"+runlist[exp]+"_"+region+"_time_serie"
+                label = runlist[exp] + " " + region
+                if get_name :
+                    reg_names = reg_names + "_" + region
+            print(tm_name)
+            get_name = False
+            if exists(tm_name+".npy") :
+                tm = np.load(tm_name+".npy")
+                print(tm.shape)
+                tm[tm>1e10]=np.nan
+                if YY is None : 
+                    bb = plt.plot(tm[0,:],tm[1,:], axes = ax, label = label)
+                else : 
+                    bb = plt.plot(tm[0,:YY],tm[1,:YY], axes = ax, label = label)
+    ##
+    ax.set_xlabel("Years")
+    ax.set_ylabel(var + " (in mmol m-3)")
+    ax.legend()
+    #
+    f_name=var + "_river_timeseries" + reg_names
+    plt.savefig(f_name)
+    if SHOW :
+        plt.show()
 
 
 
@@ -3869,8 +5828,9 @@ class subplot_proj_Orcagrid(object):
     def __init__(self, cube,
                  fig=None, ax=None, iii=1, jjj=1, rect=1, Proj = True,
                  Epipel_plot = False, cmap = None, norm = None,
-                 BIOMASK = None, ADDCTOUR = None,
+                 BIOMASK = None, ADDCTOUR = None, COAST_LINE=True, 
                  colorbar = False, location=None,
+                 Atl_Pac_section = False,
                  xrev = False, ytick_loc = "left", **attrs):
 
         """
@@ -3945,7 +5905,7 @@ class subplot_proj_Orcagrid(object):
                 proj = None
 
             if proj is None :
-                name='Robinson'
+                name='Mollweide'
                 # Transform cube to target projection
                 new_cube, extent = iris.analysis.cartography.project(cube, pcarree,
                                                              nx=400, ny=200)
@@ -3998,7 +5958,16 @@ class subplot_proj_Orcagrid(object):
         # Set up axes and title
 
         if fig is None:
-            fig = plt.figure(figsize=(20,10))
+            if Atl_Pac_section :
+                if cube.ndim == 3 :
+                    fig = plt.figure(figsize=(20,10))
+                    plt.rcParams.update({'font.size': 16})
+                elif cube.ndim == 2 :
+                    fig = plt.figure(figsize=(10,20))
+                    plt.rcParams.update({'font.size': 14})
+            else : 
+                fig = plt.figure(figsize=(20,16))
+                plt.rcParams.update({'font.size': 18})
 
         if ax is None :
             if Proj == True :
@@ -4127,7 +6096,17 @@ class subplot_proj_Orcagrid(object):
 
             if location is not None :
                 #location = attrs['location']
-                cbar = fig.colorbar(bb, ax=ax, location=location, shrink=0.7, aspect=10)
+                #
+                #divider = make_axes_locatable(ax)
+                #cax = divider.append_axes(location, size="10%", pad=0.05)
+                #cbar = fig.colorbar(bb, cax=cax)
+                #
+                #cbar = fig.colorbar(bb, ax=ax, location=location)
+                if Proj : 
+                    shrink=0.5
+                else : 
+                    shrink=1.0
+                cbar = fig.colorbar(bb, ax=ax, location=location, shrink=shrink, aspect=10)
                 #divider = make_axes_locatable(ax)
                 ## creating new axes on the right
                 ## side of current axes(ax).
@@ -4141,17 +6120,69 @@ class subplot_proj_Orcagrid(object):
                 #cbar = plt.colorbar(bb, cax=colorbar_axes)
 
                 ## colorbar label :
-                cbar.set_label(new_cube.units)
+                if cube.units != "unknown" or cube.units != "none":  
+                    cbar.set_label(cube.units)
+                else :
+                    var=cube.var_name
+                    print("var : ",var)
+                    print(cube.name)
+                    print(cube.long_name)
+                    if var == "TOT_SHALK" : 
+                        units = "meq m-2"
+                    elif var == "SIL" : 
+                        units = "mmol-Si/m3"
+                    elif var == "ALK" :
+                        units = "meq/m3"
+                    cbar.set_label(units)
 
                 if 'remove_cb' in attrs :
                     cbar.remove()
 
 
         # Draw coastlines
-        try:
-            ax.coastlines()
-        except:
-            print("no coastline to draw")
+        if COAST_LINE :
+            try:
+                ax.coastlines()
+            except:
+                print("no coastline to draw")
+        ##
+        ## Specific section Layout : 
+        if Atl_Pac_section : 
+            #yy1 = cube.coord(axis='y').points
+            #yysize = yy1.shape[0]
+            #rest = yysize - 180
+            yy = np.arange(-180,180, 30 )
+            yy_labels = ["90°","60°","30°","0°","-30°","-60°", "-90°","-60°","-30°", "0°","30°","60°"]
+
+            ## test if z coord is here.  if it is, the plot is the Atl_Pac section.
+            ##                         otherwise, it is the hovmoeller
+            try :
+                ZZZ = cube.coord(axis='z')
+                if ZZZ is not None :
+                    section=True
+                else :
+                    ## not z coord : it not a section
+                    section=False
+            except :
+                ## not z coord : it not a section
+                section=False
+
+
+            if  section :
+                #yy[181:] = np.arange(90,90 - (rest-1), -1)
+                ax.xaxis.set_ticks(yy, yy_labels)
+                secax = ax.secondary_xaxis('top')
+                yy2 = np.arange(-180,180, 90 )
+                yy2_labels = ["Arctic","Atlantic", "Antactica", "Pacific"]
+                secax.xaxis.set_ticks(yy2, yy2_labels)
+            else :
+                #yy[181:] = np.arange(90,90 - (rest-1), -1)
+                ax.yaxis.set_ticks(yy, yy_labels)
+                secax = ax.secondary_yaxis('right')
+                yy2 = np.arange(-180,180, 90 )
+                yy2_labels = ["Arctic","Atlantic", "Antactica", "Pacific"]
+                secax.yaxis.set_ticks(yy2, yy2_labels, rotation=-90, va='center')
+        ##    
         if Epipel_plot == True :
             ax.set_ylim([500, 0.0])
         self.ax = ax         # Graphical axes
