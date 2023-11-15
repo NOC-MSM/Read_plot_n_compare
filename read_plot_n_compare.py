@@ -315,7 +315,7 @@ def grid_replace(file_name) :
 
 
 
-def make_big_average_timeseries (var, runlist, run_exp_list, rundict, out_file="ptrc", MASK=None, region=None, Regrid=False, year=1850 ):
+def make_big_average_timeseries (var, runlist, run_exp_list, rundict, out_file="ptrc", MASK=None, region=None, Regrid=False, nemogrid="ORCA1_NEMO42", machine="NOC_linux", year=1850 ):
     '''
     call as : 
     make_big_average_timeseries (var, runlist, run_exp_list, out_file="ptrc", year=1850)
@@ -439,7 +439,7 @@ def make_big_average_timeseries (var, runlist, run_exp_list, rundict, out_file="
         ##
             ## mask if needed :
             if MASK is not None :
-                cube = prep_Masked_cube(cube,MASK)
+                cube = prep_Masked_cube(cube,MASK,nemogrid=nemogrid, machine=machine)
                 if cube is None :
                     print("cube ref Masking gives None")
             ##
@@ -4656,8 +4656,10 @@ def prep_mesh_mask(nemogrid="ORCA1_NEMO42", machine="NOC_linux") :
 
 def prep_Masked_cube(cube,MASK,nemogrid="ORCA1_NEMO42", machine="NOC_linux") :
     ##
+
     #get correct mesh and mask :
     [meshfile, maskfile]=prep_mesh_mask(nemogrid=nemogrid, machine=machine)
+
     #copy cube in to avoid masking several times :
     FDDT = cube.copy()
     ##read the mask : (mask is 2D x:y only)
