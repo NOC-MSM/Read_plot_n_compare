@@ -328,7 +328,8 @@ def make_big_average_timeseries (var, runlist, run_exp_list, rundict, out_file="
     '''
 
     from os.path import exists
-    from set_runs_input_for_timeseries import rundict_file_TS
+    #from set_runs_input_for_timeseries import rundict_file
+    from set_runs_input_to_plot import rundict_file
 
     # def file_name for given year and run
     # check in saved registered array if year is already here for this run
@@ -365,7 +366,7 @@ def make_big_average_timeseries (var, runlist, run_exp_list, rundict, out_file="
     
     ### get the output files name for this year - all experiments
     
-    [rundict_ptrc, rundict_diad, rundict_grid] = rundict_file_TS(year, runlist, rundict)
+    [rundict_ptrc, rundict_diad, rundict_grid] = rundict_file(year, runlist, rundict)
     print(rundict_ptrc)
     for rundd in [rundict_ptrc, rundict_diad, rundict_grid] :
         for ii in run_exp_list :
@@ -4637,18 +4638,23 @@ def prep_mesh_mask(nemogrid="ORCA1_NEMO42", machine="NOC_linux") :
     '''
     if machine=="NOC_linux" :
         if nemogrid == "ORCA1_NEMO42" :
-            meshfile = "/noc/users/jpp1m13/WORKING/UKESM/MESH/eORCA1/NEMO42/mesh_mask.nc"
-            maskfile = "/noc/users/jpp1m13/WORKING/UKESM/MESH/eORCA1/NEMO42/eORCA100_masks.nc"
+            path="/noc/users/jpp1m13/WORKING/UKESM/MESH/eORCA1/NEMO42/"
+            meshfile = path + "mesh_mask.nc"
+            maskfile = path + "eORCA100_masks.nc"
         elif nemogrid == "ORCA1_NEMO36" :
-            meshfile = "/noc/users/jpp1m13/WORKING/UKESM/MESH/eORCA1/NEMO36/mesh_mask.nc"
-            maskfile = "/noc/users/jpp1m13/WORKING/UKESM/MESH/eORCA1/NEMO436/eORCA100_masks.nc"
+            path="/noc/users/jpp1m13/WORKING/UKESM/MESH/eORCA1/NEMO36/"
+            meshfile = path + "mesh_mask.nc"
+            maskfile = path + "eORCA100_masks.nc"
     elif machine=="ARCHER2" :
         if nemogrid == "ORCA1_NEMO42" :
-            meshfile = "/noc/users/jpp1m13/WORKING/UKESM/MESH/eORCA1/NEMO42/mesh_mask.nc"
-            maskfile = "/noc/users/jpp1m13/WORKING/UKESM/MESH/eORCA1/NEMO42/eORCA100_masks.nc"
+            path="/noc/users/jpp1m13/WORKING/UKESM/MESH/eORCA1/NEMO42/"
+            meshfile = path + "mesh_mask.nc"
+            maskfile = path + "eORCA100_masks.nc"
         elif nemogrid == "ORCA1_NEMO36" :
-            meshfile = "/noc/users/jpp1m13/WORKING/UKESM/MESH/eORCA1/NEMO36/mesh_mask.nc"
-            maskfile = "/noc/users/jpp1m13/WORKING/UKESM/MESH/eORCA1/NEMO436/eORCA100_masks.nc"
+            path="/noc/users/jpp1m13/WORKING/UKESM/MESH/eORCA1/NEMO36/"
+            meshfile = path + "mesh_mask.nc"
+            maskfile = path + "eORCA100_masks.nc"
+
     return meshfile, maskfile
 
 
