@@ -367,7 +367,7 @@ def make_big_average_timeseries (var, runlist, run_exp_list, rundict, out_file="
     ### get the output files name for this year - all experiments
     
     [rundict_ptrc, rundict_diad, rundict_grid] = rundict_file(year, runlist, rundict)
-    print(rundict_ptrc)
+    #print(rundict_ptrc)
     for rundd in [rundict_ptrc, rundict_diad, rundict_grid] :
         for ii in run_exp_list :
             if out_file == "ptrc" :
@@ -390,14 +390,15 @@ def make_big_average_timeseries (var, runlist, run_exp_list, rundict, out_file="
                     EXIT = True
     ##
     ### run through all runs of the list
+    TSpath="TIMESERIES/"
     for exp in run_exp_list :
         EXIT=False
         ###
         ##1 - read saved time_serie if exist
         if region is None :
-            tm_name=var+"_"+runlist[exp]+"_time_serie"
+            tm_name= TSpath + var+"_"+runlist[exp]+"_time_serie"
         else : 
-            tm_name=var+"_"+runlist[exp]+"_"+region+"_time_serie"
+            tm_name= TSpath + var+"_"+runlist[exp]+"_"+region+"_time_serie"
         print(tm_name)    
         if exists(tm_name+".npy") : 
             tm = np.load(tm_name+".npy")
@@ -452,7 +453,8 @@ def make_big_average_timeseries (var, runlist, run_exp_list, rundict, out_file="
                 if cube is None :
                     print("cube ref Regrid gives None")
                 print("Regridded cube : ", cube.shape)
-            #print("cube_ref : ", cube_ref.shape)
+            #print("cube_ref : ", cube.shape)
+            #print(cube)
     ##
 
             ##
@@ -468,7 +470,8 @@ def make_big_average_timeseries (var, runlist, run_exp_list, rundict, out_file="
             ## can be done proprely, but try first the easy way : 
             #### we want to regrid the surface, and then cube collapse lat/lon or nanmean. \o/
             #### no need for region extraction --
-            avg = np.nanmean(cube.data)
+            
+            avg = np.mean(cube.data)
             #print(year, avg)
             ytm=np.empty([2,1])
             ytm[0,0]=year
@@ -4772,7 +4775,7 @@ def prep_cube_Obs(FDDT, diad_file) :
 
 
 
-def prep_cube(file_name, var, YYear=13, REF_COMP=None, Obs=False, oneD=False, MASK_ZERO=False) :
+def prep_cube(file_name, var, YYear=13, REF_COMP=None, Obs=False, oneD=False, MASK_ZERO=True) :
     '''
     prep_cube(file_name, var, YYear=13, REF_COMP=None, Obs=False, oneD=False, MASK_ZERO=False)
     
@@ -5265,14 +5268,14 @@ def prep_cube_diff(file_name_ref, file_name, var, oneD=False) :
 def read_cube(nc_P, var, mask = True, hard_mask = True, MASK_ZERO=False) :
     v_TT = iris.Constraint(cube_func=(lambda c: c.var_name == var))
     TT = iris.load(nc_P, constraints=v_TT)[0]
-    if mask == True :
-        SS = np.ma.array(TT.data, mask= np.absolute(TT.data) >1e17, hard_mask=hard_mask)
-        if MASK_ZERO : 
-            SS = np.ma.masked_where(TT.data==0, SS)
+    #if mask == True :
+    ### masking crazy - unmasked - values
+    SS = np.ma.array(TT.data, mask= np.absolute(TT.data) >1e16, hard_mask=hard_mask)
+    cube = TT.copy(SS)
+    ##
+    if MASK_ZERO : 
+        cube.data = np.ma.masked_where(cube.data==0, cube.data)
         #
-        cube = TT.copy(SS)
-    else :
-        cube = TT.copy()
     return cube
 
 
@@ -5288,6 +5291,7 @@ def plot_timeseries_from_file(var, runlist, run_exp_list, region_list = [None, "
     fig = plt.figure(figsize=(5,5))
     ax = fig.add_subplot(1, 1, 1)
     ##
+    TSpath="TIMESERIES/"
     reg_names="reg"
     get_name = True
     for exp in run_exp_list :
@@ -5295,17 +5299,17 @@ def plot_timeseries_from_file(var, runlist, run_exp_list, region_list = [None, "
         ##1 - read saved time_serie if exist
         for region in region_list :
             if region is None :
-                tm_name=var+"_"+runlist[exp]+"_time_serie"
+                tm_name= TSpath + var+"_"+runlist[exp]+"_time_serie"
                 label = runlist[exp]
                 if get_name :
                     reg_names = reg_names + "_global"
             elif region == "NorthOrtho" :
-                tm_name=var+"_"+runlist[exp]+"_"+region+"_time_serie"
+                tm_name= TSpath + var+"_"+runlist[exp]+"_"+region+"_time_serie"
                 label = runlist[exp] + " Arctic"
                 if get_name :
                     reg_names = reg_names + "_Arctic"
             else :
-                tm_name=var+"_"+runlist[exp]+"_"+region+"_time_serie"
+                tm_name= TSpath + var+"_"+runlist[exp]+"_"+region+"_time_serie"
                 label = runlist[exp] + " " + region
                 if get_name :
                     reg_names = reg_names + "_" + region
@@ -5320,8 +5324,13 @@ def plot_timeseries_from_file(var, runlist, run_exp_list, region_list = [None, "
                 else : 
                     bb = plt.plot(tm[0,:YY],tm[1,:YY], axes = ax, label = label)
     ##
+    if var == "PP" :
+        units = "g-C/m2/d"
+    else : 
+        units = "mmol m-3"
+
     ax.set_xlabel("Years")
-    ax.set_ylabel(var + " (in mmol m-3)")
+    ax.set_ylabel(var + " (in " + units +")")
     ax.legend()
     #
     f_name=var + "_river_timeseries" + reg_names
