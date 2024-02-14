@@ -9,7 +9,7 @@ call them in a python function or jupyter notebook, the following way :
 ``` python
 
 ## If you want to test in Jupyter notebook,
-## you might need the first lot of packages :
+## you might need the first lot of packages to work with :
 import iris
 import iris.quickplot as qplt
 import iris.plot as iplt
@@ -18,7 +18,7 @@ import numpy as np
 import numpy.ma as ma
 #import h5py
 
-## Import the functions :
+## Import the functions defined in the `read_plot_n_compare.py` file :
 from read_plot_n_compare import runclass
 from read_plot_n_compare import subplot_diff_list, subplot_diff, subplot_no_diff, subplot_timeseries
 from read_plot_n_compare import subplot_comp_list, subplot_comp
@@ -30,6 +30,8 @@ from read_plot_n_compare import bbox_extract_2Dcoords, nc_obs2D_varname, mat_obs
 
 ### !!! To Be Adapted !!!
 ### define the experiments outputs to use in your analyses :
+### in `set_runs_input_to_plot_surf.py` :
+###    -- You need to define the path and output file names to be used in the script --
 ###===================================
 from set_runs_input_to_plot_surf import rundict_file ## , GOSI9dict_file ## you can def and add more if needed.
 ###===================================
@@ -91,10 +93,16 @@ rundict = {
 ###############################
 # init done
 
-
+---------------------
+## choose the expiriments you want to compare:
+## Here we compare  the experiment 3 to 6 and 5
+## the numbers are the one set in the dictionnary and lists above.
 
 #run_exp_list=[1,3,2,4,0]
 run_exp_list=[3,6,5]
+
+## Some plot examples :
+##------------------------------------
 
 ## Surface plots
 subplot_diff("CHL", rundict_ptrc, runlist, run_exp_list, Meth="Surface",region = "NorthOrtho", MASK_ZERO=True, SINGLE_PLOTS=False)
@@ -128,5 +136,8 @@ subplot_diff("thetao", rundict_grid, runlist, run_exp_list, Meth="Atl_Pac_Lat",N
 #subplot_diff("tos", rundict_grid, runlist, run_exp_list, Meth="Atl_Pac_hov",NEW_regrid=False, SINGLE_PLOTS=False)
 #subplot_diff("DIN", rundict_ptrc, runlist, run_exp_list, Meth="Atl_Pac_hov",NEW_regrid=False, SINGLE_PLOTS=False)
 
-
 ```
+
+## More informations: 
+the most used functions (like `subplot_diff` ) have a documentation of their own. 
+You can se it with `sub_plot_diff.__doc__` ; Or see the head of the function in `read_plot_n_compare.py`
