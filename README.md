@@ -82,11 +82,13 @@ rundict = {
    runlist[6] : "MED_CHL/CHL_2ways_dc_ifr"
 }
 
-
+## Set the run-dictionnaries by calling the rundict_file function defined and
+## amended earlier in `set_runs_input_to_plot_surf.py` :
 [rundict_ptrc,rundict_diad,rundict_grid] = rundict_file(yr, runlist, rundict)
+## you can tune it make different run-dictionnaries if needed
 #[GOSI9dict_ptrc,GOSI9dict_diad,GOSI9dict_grid] = GOSI9dict_file(yr, runlist, rundict)
 #[rundict_sumptrc,rundict_sumdiad,rundict_sumgrid] = rundict_sum_file(yr)
-### for example : get ptrc output of 1st exp with file_ptrc = rundict_ptrc[runlist[0]]
+### for example : get ptrc output of our 1st experiment with file_ptrc = rundict_ptrc[runlist[0]]
 
 
 ###############################
@@ -137,6 +139,23 @@ subplot_diff("thetao", rundict_grid, runlist, run_exp_list, Meth="Atl_Pac_Lat",N
 #subplot_diff("DIN", rundict_ptrc, runlist, run_exp_list, Meth="Atl_Pac_hov",NEW_regrid=False, SINGLE_PLOTS=False)
 
 ```
+
+* MLD global :    
+  ![image](https://github.com/NOC-MSM/Read_plot_n_compare/assets/20911597/a83cf1e4-377f-4e1a-b20d-f5a02527cb9b)
+* Surface PP Arctic projection:     
+  ![image](https://github.com/NOC-MSM/Read_plot_n_compare/assets/20911597/c50c0848-dd7a-4be6-a73b-d7e4ee00ed6c)
+* UK shelves :         
+  ![image](https://github.com/NOC-MSM/Read_plot_n_compare/assets/20911597/aa4ce1d0-6d3d-4fbc-9031-74e52d80c73b)
+* Atlantic-Pacific transect :    
+  ![image](https://github.com/NOC-MSM/Read_plot_n_compare/assets/20911597/0ca7cb10-7a88-4b8f-9980-b0e53147d216)
+* timeseties :     
+  ![image](https://github.com/NOC-MSM/Read_plot_n_compare/assets/20911597/0c49f828-0825-45bc-9b6f-13d8479ef11c)
+* And of course, you can tune your script using the functions to get your own plot.  
+  for example MLD on top of CHL time serie :     
+  ![image](https://github.com/NOC-MSM/Read_plot_n_compare/assets/20911597/2aa89520-0629-4ec4-b63e-8a2f114bb054)
+
+
+All comparison plots can be saved individually and not just altogether.
 
 ## More informations: 
 the most used functions (like `subplot_diff` ) have a documentation of their own. 
